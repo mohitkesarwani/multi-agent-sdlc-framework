@@ -86,6 +86,96 @@ Implement React components with Vite, Tailwind CSS, and Context API.
 7. ❌ Do NOT skip testing requirements
 8. ❌ Do NOT hardcode secrets or API URLs
 
+## Project-Specific Context
+
+### Consumer Lending App - Sprint 1 Implementation Guide
+
+**Backend Models to Implement:**
+1. **User.js** - Authentication and profile
+   - Fields: email, magicLinkToken, magicLinkExpiry, firstName, lastName, dateOfBirth, phone, address
+   - Methods: generateMagicLink(), verifyMagicLink()
+   
+2. **Application.js** - Loan application
+   - Fields: userId, status, personalInfo, employmentInfo, financialInfo, loanAmount, loanPurpose, loanTerm
+   - Methods: submit(), updateStatus()
+   
+3. **Document.js** - Document storage
+   - Fields: applicationId, documentType, fileUrl, verificationStatus, ocrData
+   - Methods: extractOCR(), verify()
+   
+4. **BankStatement.js** - Illion data
+   - Fields: applicationId, illionConnectionId, transactions, incomeAnalysis, expenseAnalysis
+   
+5. **VerificationResult.js** - Verification results
+   - Fields: applicationId, verificationType, verificationStatus, verificationData, riskLevel
+   
+6. **Loan.js** - Loan management
+   - Fields: applicationId, userId, loanAmount, interestRate, status, repaymentSchedule
+   
+7. **Agreement.js** - Document signing
+   - Fields: applicationId, agreementType, helloSignRequestId, signatureStatus
+   
+8. **AuditLog.js** - Compliance logging
+   - Fields: userId, action, details, ipAddress, timestamp
+
+**Backend Services to Implement:**
+1. **emailService.js** - SendGrid/Mailgun integration for magic links
+2. **greenIdService.js** - Green ID API for identity verification
+3. **illionService.js** - Illion API for bank account connection
+4. **bureauService.js** - Credit bureau API integration
+5. **helloSignService.js** - HelloSign API for document signing
+6. **loanDecisionService.js** - Loan approval decision engine
+
+**Frontend Components to Implement:**
+1. **Login.jsx** - Magic link login page
+2. **OnboardingWizard.jsx** - Multi-step onboarding
+3. **PersonalInfoStep.jsx** - Personal information form
+4. **EmploymentStep.jsx** - Employment information form
+5. **DocumentUploadStep.jsx** - Document upload interface
+6. **ReviewStep.jsx** - Review and submit
+7. **Dashboard.jsx** - User dashboard
+8. **ApplicationDetails.jsx** - Application status page
+9. **Documents.jsx** - Document management
+
+**Frontend Services to Implement:**
+1. **authService.js** - Authentication API calls
+2. **applicationService.js** - Application management API calls
+3. **documentService.js** - Document upload/retrieval
+4. **verificationService.js** - Verification status checks
+5. **loanService.js** - Loan management
+
+**Key Integration Points:**
+- Magic link authentication flow
+- File upload with OCR processing
+- Green ID verification API
+- Illion bank connection flow
+- Credit bureau API calls
+- Loan decision engine logic
+- HelloSign document signing
+
+**Environment Variables Required:**
+```
+# Backend .env
+MONGODB_URI=
+JWT_SECRET=
+JWT_REFRESH_SECRET=
+SENDGRID_API_KEY=
+GREEN_ID_API_KEY=
+GREEN_ID_API_SECRET=
+ILLION_CLIENT_ID=
+ILLION_CLIENT_SECRET=
+CREDIT_BUREAU_API_KEY=
+HELLOSIGN_API_KEY=
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_S3_BUCKET=
+```
+
+```
+# Frontend .env
+VITE_API_URL=http://localhost:5000/api
+```
+
 ---
 
 **Next Agent:** 05_Quality_Assurance  
