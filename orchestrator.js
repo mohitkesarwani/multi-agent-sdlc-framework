@@ -30,8 +30,9 @@ const CONFIG = {
   // Sprint number (can be specified via --sprint flag)
   sprintNumber: null,
   
-  // Whether to actually generate code or just simulate
-  generateCode: process.env.GENERATE_CODE !== 'false',
+  // Note: This orchestrator provides planning and specifications
+  // Actual code generation requires AI agents with file write capabilities
+  generateCode: false,
   
   // Project knowledge path
   projectKnowledgePath: path.join(__dirname, 'docs', 'PROJECT_KNOWLEDGE.md')
@@ -232,7 +233,6 @@ Options:
 Environment Variables:
   TARGET_REPO              Target Git repository URL
   PROJECT_TYPE             Project type (consumer-lending-app, generic)
-  GENERATE_CODE            Set to 'false' to simulate without generating code
 
 Examples:
   node orchestrator.js
@@ -253,7 +253,6 @@ Examples:
     console.log(`   Target Repo: ${this.config.targetRepo}`);
     console.log(`   Project Type: ${this.config.projectType}`);
     console.log(`   Sprint: ${this.config.sprintNumber || 'All phases'}`);
-    console.log(`   Generate Code: ${this.config.generateCode ? 'Yes' : 'No (Simulation)'}`);
     console.log('');
     
     try {
@@ -283,24 +282,31 @@ Examples:
     try {
       const content = fs.readFileSync(this.projectKnowledgePath, 'utf-8');
       
+      // Define regex patterns for better maintainability
+      const SECTION_PATTERNS = {
+        businessRequirements: /## 1️⃣ BUSINESS REQUIREMENTS[\s\S]*?(?=(?:##\s+\d️⃣|$))/,
+        schemaDesign: /## 2️⃣ SCHEMA DESIGN[\s\S]*?(?=(?:##\s+\d️⃣|$))/,
+        iterationStatus: /## 3️⃣ CURRENT ITERATION STATUS[\s\S]*?(?=(?:##\s+\d️⃣|$))/
+      };
+      
       // Parse requirements
-      const businessReqMatch = content.match(/## 1️⃣ BUSINESS REQUIREMENTS([\s\S]*?)(?=##|$)/);
+      const businessReqMatch = content.match(SECTION_PATTERNS.businessRequirements);
       if (businessReqMatch) {
-        this.businessRequirements = businessReqMatch[1].trim();
+        this.businessRequirements = businessReqMatch[0].trim();
         console.log('✅ Business requirements loaded');
       }
       
       // Parse schema design
-      const schemaMatch = content.match(/## 2️⃣ SCHEMA DESIGN([\s\S]*?)(?=##|$)/);
+      const schemaMatch = content.match(SECTION_PATTERNS.schemaDesign);
       if (schemaMatch) {
-        this.schemaDesign = schemaMatch[1].trim();
+        this.schemaDesign = schemaMatch[0].trim();
         console.log('✅ Schema design loaded');
       }
       
       // Parse current iteration status
-      const iterationMatch = content.match(/## 3️⃣ CURRENT ITERATION STATUS([\s\S]*?)(?=##|$)/);
+      const iterationMatch = content.match(SECTION_PATTERNS.iterationStatus);
       if (iterationMatch) {
-        this.iterationStatus = iterationMatch[1].trim();
+        this.iterationStatus = iterationMatch[0].trim();
         console.log('✅ Iteration status loaded');
       }
       
@@ -622,15 +628,16 @@ Examples:
     console.log(`\n✓ Activated: ${this.currentAgent.role}`);
     console.log('🔧 Backend Developer and Frontend Developer are working...\n');
     
-    if (this.config.generateCode) {
-      console.log('📝 NOTE: Actual code generation requires connecting to AI agents.');
-      console.log('📝 In production, this would invoke:');
-      console.log('   - Backend Dev Agent to generate Mongoose models, routes, controllers');
-      console.log('   - Frontend Dev Agent to generate React components, services');
-      console.log('   - Integration services for Green ID, Illion, etc.\n');
-    }
+    // Note about actual code generation
+    console.log('📝 NOTE: This orchestrator provides the execution plan and file specifications.');
+    console.log('📝 Actual code generation requires connecting AI agents with file write capabilities.');
+    console.log('📝 To generate code, connect this orchestrator to agents that can:');
+    console.log('   - Read PROJECT_KNOWLEDGE.md and understand requirements');
+    console.log('   - Generate Mongoose models, Express routes, and React components');
+    console.log('   - Write files to the repository');
+    console.log('   - Run tests and validate generated code\n');
     
-    console.log('📁 Files to be generated:');
+    console.log('📁 Files that would be generated:');
     
     if (this.config.projectType === 'consumer-lending-app') {
       console.log('\n🔹 Backend Files:');
@@ -715,10 +722,10 @@ Examples:
       process.exit(0);
     }
     
-    console.log('\n💡 TIP: To generate actual code, connect this orchestrator to AI agents');
-    console.log('   that have access to the codebase and can write files.\n');
+    console.log('💡 TIP: To enable actual code generation, integrate this orchestrator with');
+    console.log('   AI agents that have file system access and can write code based on specifications.\n');
     
-    console.log('✅ Code generation plan acknowledged.');
+    console.log('✅ Execution plan complete and acknowledged.');
     await this.delay(1000);
   }
 
@@ -812,7 +819,7 @@ Examples:
     }
     
     console.log('📝 Next Steps:');
-    console.log('  1. Connect AI agents to generate actual code');
+    console.log('  1. Connect AI agents to generate actual code from specifications');
     console.log('  2. Review generated code for quality and correctness');
     console.log('  3. Run tests and validate functionality');
     console.log('  4. Push code to repository: ' + this.config.targetRepo);
@@ -823,10 +830,12 @@ Examples:
     
     console.log('🚀 Ready for code generation and deployment!\n');
     
-    console.log('💡 To execute with actual code generation:');
-    console.log('   1. Connect this orchestrator to AI agents with file write access');
-    console.log('   2. Configure agent prompts in .agent-config/');
-    console.log('   3. Run: GENERATE_CODE=true node orchestrator.js\n');
+    console.log('💡 Integration Guide:');
+    console.log('   To enable code generation, integrate AI agents with:');
+    console.log('   - File system write access');
+    console.log('   - Ability to read PROJECT_KNOWLEDGE.md and agent instructions');
+    console.log('   - Code generation capabilities (models, routes, components)');
+    console.log('   - Testing and validation tools\n');
   }
 
   /**
