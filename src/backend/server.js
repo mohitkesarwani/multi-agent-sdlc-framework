@@ -66,7 +66,7 @@ app.use(errorHandler);
 const PORT = environment.server.port;
 const HOST = environment.server.host;
 
-app.listen(PORT, HOST, () => {
+const server = app.listen(PORT, HOST, () => {
     console.log(`
 ╔═══════════════════════════════════════════════════════════╗
 ║   Multi-Agent SDLC Framework - Backend Server Started    ║
@@ -81,7 +81,7 @@ app.listen(PORT, HOST, () => {
 // Graceful shutdown
 process.on('SIGTERM', () => {
     console.log('SIGTERM signal received: closing HTTP server');
-    app.close(() => {
+    server.close(() => {
         console.log('HTTP server closed');
     });
 });

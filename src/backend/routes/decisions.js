@@ -79,7 +79,7 @@ router.put('/:id', authenticate, async (req, res) => {
             req.body,
             { new: true }
         ).populate('projectId', 'name')
-         .populate('madeBy', 'username email');
+        .populate('madeBy', 'username email');
 
         if (!decision) {
             return res.status(404).json({ error: 'Decision log not found' });

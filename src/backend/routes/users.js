@@ -32,7 +32,7 @@ router.get('/', authenticate, async (req, res) => {
 router.get('/:id', authenticate, async (req, res) => {
     try {
         // Users can only view their own profile unless they're admin
-        if (req.user.userId !== req.params.id && req.user.role !== 'admin') {
+        if (req.user.userId.toString() !== req.params.id && req.user.role !== 'admin') {
             return res.status(403).json({ 
                 error: 'Access denied. You can only view your own profile.' 
             });
@@ -57,7 +57,7 @@ router.get('/:id', authenticate, async (req, res) => {
 router.put('/:id', authenticate, async (req, res) => {
     try {
         // Users can only update their own profile unless they're admin
-        if (req.user.userId !== req.params.id && req.user.role !== 'admin') {
+        if (req.user.userId.toString() !== req.params.id && req.user.role !== 'admin') {
             return res.status(403).json({ 
                 error: 'Access denied. You can only update your own profile.' 
             });

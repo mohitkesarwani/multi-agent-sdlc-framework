@@ -85,7 +85,7 @@ router.put('/:id/approve', authenticate, async (req, res) => {
             },
             { new: true }
         ).populate('requestedBy', 'username email')
-         .populate('reviewedBy', 'username email');
+        .populate('reviewedBy', 'username email');
 
         if (!approval) {
             return res.status(404).json({ error: 'Approval not found' });
@@ -113,7 +113,7 @@ router.put('/:id/reject', authenticate, async (req, res) => {
             },
             { new: true }
         ).populate('requestedBy', 'username email')
-         .populate('reviewedBy', 'username email');
+        .populate('reviewedBy', 'username email');
 
         if (!approval) {
             return res.status(404).json({ error: 'Approval not found' });

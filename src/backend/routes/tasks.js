@@ -79,7 +79,7 @@ router.put('/:id', authenticate, async (req, res) => {
             req.body,
             { new: true }
         ).populate('projectId', 'name')
-         .populate('assignedTo', 'username email');
+        .populate('assignedTo', 'username email');
 
         if (!task) {
             return res.status(404).json({ error: 'Task not found' });
