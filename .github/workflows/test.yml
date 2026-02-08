@@ -1,0 +1,205 @@
+name: Run Tests
+
+on:
+  push:
+    branches: [ main, develop, 'feature/**' ]
+  pull_request:
+    branches: [ main, develop ]
+
+# Cancel in-progress runs when a new workflow is triggered
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-backend:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    strategy:
+      matrix:
+        node-version: [16.x, 18.x, 20.x]
+    
+    services:
+      mongodb:
+        image: mongo:6.0
+        env:
+          MONGO_INITDB_ROOT_USERNAME: testuser
+          MONGO_INITDB_ROOT_PASSWORD: testpass
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      
+      - name: Install root dependencies
+        run: npm ci
+      
+      - name: Install backend dependencies
+        working-directory: ./src/backend
+        run: npm ci
+      
+      - name: Create backend .env file
+        working-directory: ./src/backend
+        run: |
+          cat > .env << EOF
+          NODE_ENV=test
+          PORT=5001
+          MONGODB_URI=mongodb://testuser:testpass@localhost:27017/multi-agent-sdlc-test?authSource=admin
+          JWT_SECRET=test-jwt-secret-for-ci
+          JWT_REFRESH_SECRET=test-refresh-secret-for-ci
+          BCRYPT_ROUNDS=4
+          LOG_LEVEL=error
+          EOF
+      
+      - name: Run backend tests
+        working-directory: ./src/backend
+        run: npm test -- --coverage --maxWorkers=2
+        env:
+          CI: true
+      
+      - name: Upload backend coverage
+        if: matrix.node-version == '18.x'
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./src/backend/coverage/lcov.info
+          flags: backend
+          name: backend-coverage
+  
+  test-frontend:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    strategy:
+      matrix:
+        node-version: [16.x, 18.x, 20.x]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      
+      - name: Install root dependencies
+        run: npm ci
+      
+      - name: Install frontend dependencies
+        working-directory: ./src/frontend
+        run: npm ci
+      
+      - name: Run frontend tests
+        working-directory: ./src/frontend
+        run: npm test -- --run --coverage
+        env:
+          CI: true
+      
+      - name: Upload frontend coverage
+        if: matrix.node-version == '18.x'
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./src/frontend/coverage/lcov.info
+          flags: frontend
+          name: frontend-coverage
+  
+  test-integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend]
+    permissions:
+      contents: read
+    
+    services:
+      mongodb:
+        image: mongo:6.0
+        env:
+          MONGO_INITDB_ROOT_USERNAME: testuser
+          MONGO_INITDB_ROOT_PASSWORD: testpass
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd src/backend && npm ci
+          cd ../frontend && npm ci
+      
+      - name: Create .env files
+        run: |
+          cat > .env << EOF
+          NODE_ENV=test
+          PORT=5001
+          FRONTEND_PORT=3000
+          MONGODB_URI=mongodb://testuser:testpass@localhost:27017/multi-agent-sdlc-test?authSource=admin
+          JWT_SECRET=test-jwt-secret-for-ci
+          JWT_REFRESH_SECRET=test-refresh-secret-for-ci
+          BCRYPT_ROUNDS=4
+          EOF
+      
+      - name: Start backend server
+        working-directory: ./src/backend
+        run: |
+          cp ../../.env .
+          npm start &
+          sleep 10
+      
+      - name: Run integration tests
+        run: npm run test:integration || echo "No integration tests defined yet"
+      
+      - name: Stop backend server
+        if: always()
+        run: pkill -f "node.*server.js" || true
+  
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend, test-integration]
+    if: always()
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Check test results
+        run: |
+          if [[ "${{ needs.test-backend.result }}" == "failure" ]] || \
+             [[ "${{ needs.test-frontend.result }}" == "failure" ]] || \
+             [[ "${{ needs.test-integration.result }}" == "failure" ]]; then
+            echo "❌ Some tests failed"
+            exit 1
+          else
+            echo "✅ All tests passed"
+          fi

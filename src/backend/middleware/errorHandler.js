@@ -1,6 +1,6 @@
 // Error Handling Middleware
 
-const errorHandler = (err, req, res, _next) => {
+const errorHandler = (err, req, res, next) => {
     // Log error to console
     console.error(err);
 

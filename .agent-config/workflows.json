@@ -1,0 +1,806 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": "1.0.0",
+  "description": "Agent workflows for Multi-Agent SDLC Framework",
+  "workflows": [
+    {
+      "workflowId": "new-feature",
+      "name": "New Feature Development",
+      "description": "Complete workflow for developing and deploying a new feature from requirements to production",
+      "trigger": {
+        "type": "manual",
+        "initiator": "product_owner",
+        "required_inputs": ["feature_description", "business_justification", "priority"]
+      },
+      "steps": [
+        {
+          "stepId": "req-001",
+          "name": "Requirements Analysis",
+          "agent": "requirement-agent",
+          "description": "Analyze and document feature requirements",
+          "input": {
+            "sources": ["trigger.feature_description", "trigger.business_justification", "trigger.priority"],
+            "format": "requirement_request",
+            "required_fields": ["feature_description", "stakeholders", "priority"]
+          },
+          "output": {
+            "artifacts": ["requirements_document", "user_stories", "acceptance_criteria"],
+            "format": "structured_requirements",
+            "validation": ["completeness_check", "stakeholder_approval"]
+          },
+          "estimated_duration_minutes": 30,
+          "timeout_minutes": 60,
+          "retry_policy": {
+            "max_retries": 2,
+            "retry_on": ["validation_failure", "incomplete_output"]
+          }
+        },
+        {
+          "stepId": "arch-001",
+          "name": "Architecture Design",
+          "agent": "system-architect",
+          "description": "Design system architecture and technical approach",
+          "dependencies": ["req-001"],
+          "input": {
+            "sources": ["req-001.requirements_document", "req-001.user_stories"],
+            "format": "architecture_request",
+            "additional_context": ["existing_architecture", "technology_constraints"]
+          },
+          "output": {
+            "artifacts": ["architecture_document", "component_design", "api_specifications", "technology_stack"],
+            "format": "architecture_design",
+            "validation": ["scalability_check", "security_review"]
+          },
+          "estimated_duration_minutes": 60,
+          "timeout_minutes": 120,
+          "retry_policy": {
+            "max_retries": 2,
+            "retry_on": ["validation_failure"]
+          }
+        },
+        {
+          "stepId": "plan-001",
+          "name": "Implementation Planning",
+          "agent": "implementation-planner",
+          "description": "Create detailed implementation plan and task breakdown",
+          "dependencies": ["arch-001"],
+          "input": {
+            "sources": ["arch-001.architecture_document", "req-001.requirements_document"],
+            "format": "planning_request",
+            "additional_context": ["team_capacity", "timeline_constraints"]
+          },
+          "output": {
+            "artifacts": ["implementation_plan", "task_breakdown", "effort_estimates", "timeline"],
+            "format": "implementation_plan",
+            "validation": ["feasibility_check", "resource_alignment"]
+          },
+          "estimated_duration_minutes": 45,
+          "timeout_minutes": 90,
+          "retry_policy": {
+            "max_retries": 2,
+            "retry_on": ["validation_failure"]
+          }
+        },
+        {
+          "stepId": "dev-001",
+          "name": "Feature Implementation",
+          "agent": "fullstack-dev-swarm",
+          "description": "Implement feature across full stack",
+          "dependencies": ["plan-001"],
+          "input": {
+            "sources": ["plan-001.task_breakdown", "arch-001.component_design", "arch-001.api_specifications"],
+            "format": "implementation_task",
+            "additional_context": ["coding_standards", "existing_codebase"]
+          },
+          "output": {
+            "artifacts": ["source_code", "unit_tests", "integration_tests", "documentation"],
+            "format": "code_package",
+            "validation": ["code_quality_check", "test_coverage_check", "build_verification"]
+          },
+          "estimated_duration_minutes": 480,
+          "timeout_minutes": 960,
+          "retry_policy": {
+            "max_retries": 3,
+            "retry_on": ["build_failure", "test_failure"]
+          }
+        },
+        {
+          "stepId": "sec-001",
+          "name": "Security Review",
+          "agent": "security-sentinel",
+          "description": "Conduct security audit of implementation",
+          "dependencies": ["dev-001"],
+          "execution_type": "parallel_with_qa",
+          "input": {
+            "sources": ["dev-001.source_code", "arch-001.architecture_document"],
+            "format": "security_audit_request",
+            "additional_context": ["security_requirements", "compliance_standards"]
+          },
+          "output": {
+            "artifacts": ["security_report", "vulnerability_assessment", "recommendations"],
+            "format": "security_audit_report",
+            "validation": ["critical_vulnerabilities_check"]
+          },
+          "estimated_duration_minutes": 60,
+          "timeout_minutes": 120,
+          "decision_point": {
+            "condition": "critical_vulnerabilities_found",
+            "on_true": "goto:dev-002",
+            "on_false": "continue"
+          }
+        },
+        {
+          "stepId": "qa-001",
+          "name": "Quality Assurance Testing",
+          "agent": "quality-assurance",
+          "description": "Execute comprehensive testing",
+          "dependencies": ["dev-001"],
+          "execution_type": "parallel_with_security",
+          "input": {
+            "sources": ["dev-001.source_code", "req-001.acceptance_criteria", "dev-001.unit_tests"],
+            "format": "test_request",
+            "additional_context": ["test_environment", "test_data"]
+          },
+          "output": {
+            "artifacts": ["test_report", "test_results", "defect_report", "coverage_report"],
+            "format": "qa_report",
+            "validation": ["coverage_threshold_check", "critical_defects_check"]
+          },
+          "estimated_duration_minutes": 120,
+          "timeout_minutes": 240,
+          "decision_point": {
+            "condition": "critical_defects_found OR coverage_below_threshold",
+            "on_true": "goto:dev-002",
+            "on_false": "continue"
+          }
+        },
+        {
+          "stepId": "dev-002",
+          "name": "Fix Issues",
+          "agent": "fullstack-dev-swarm",
+          "description": "Address security vulnerabilities and defects",
+          "dependencies": ["sec-001", "qa-001"],
+          "execution_condition": "issues_found",
+          "input": {
+            "sources": ["sec-001.vulnerability_assessment", "qa-001.defect_report"],
+            "format": "fix_task",
+            "additional_context": ["original_implementation"]
+          },
+          "output": {
+            "artifacts": ["fixed_code", "verification_tests"],
+            "format": "code_package",
+            "validation": ["fixes_verified"]
+          },
+          "estimated_duration_minutes": 120,
+          "timeout_minutes": 240,
+          "next_step": "loop_to:sec-001"
+        },
+        {
+          "stepId": "final-001",
+          "name": "Final Validation",
+          "agent": "quality-assurance",
+          "description": "Final validation before deployment",
+          "dependencies": ["sec-001", "qa-001"],
+          "execution_condition": "no_critical_issues",
+          "input": {
+            "sources": ["all_artifacts"],
+            "format": "validation_request"
+          },
+          "output": {
+            "artifacts": ["deployment_approval", "release_notes"],
+            "format": "approval_package",
+            "validation": ["all_checks_passed"]
+          },
+          "estimated_duration_minutes": 30,
+          "timeout_minutes": 60
+        }
+      ],
+      "parallel_execution": [
+        {
+          "group_id": "testing-phase",
+          "steps": ["sec-001", "qa-001"],
+          "wait_for_all": true
+        }
+      ],
+      "error_handling": {
+        "on_timeout": "notify_and_escalate",
+        "on_critical_failure": "rollback_and_notify",
+        "on_validation_failure": "retry_with_feedback",
+        "max_workflow_retries": 3
+      },
+      "success_criteria": [
+        "all_requirements_met",
+        "no_critical_defects",
+        "no_critical_vulnerabilities",
+        "test_coverage_above_threshold",
+        "code_quality_standards_met"
+      ],
+      "notifications": {
+        "on_start": ["product_owner", "tech_lead"],
+        "on_complete": ["product_owner", "tech_lead", "stakeholders"],
+        "on_failure": ["tech_lead", "dev_team"],
+        "on_decision_point": ["tech_lead"]
+      }
+    },
+    {
+      "workflowId": "bug-fix",
+      "name": "Bug Fix Workflow",
+      "description": "Workflow for identifying, fixing, and verifying bug fixes",
+      "trigger": {
+        "type": "automated_or_manual",
+        "initiator": "user_or_monitoring_system",
+        "required_inputs": ["bug_description", "severity", "steps_to_reproduce"]
+      },
+      "steps": [
+        {
+          "stepId": "req-bug-001",
+          "name": "Bug Analysis",
+          "agent": "requirement-agent",
+          "description": "Analyze and document bug details",
+          "input": {
+            "sources": ["trigger.bug_description", "trigger.severity", "trigger.steps_to_reproduce"],
+            "format": "bug_report",
+            "required_fields": ["bug_description", "severity", "impact"]
+          },
+          "output": {
+            "artifacts": ["bug_analysis", "expected_behavior", "actual_behavior"],
+            "format": "bug_specification",
+            "validation": ["reproducibility_confirmed"]
+          },
+          "estimated_duration_minutes": 15,
+          "timeout_minutes": 30
+        },
+        {
+          "stepId": "arch-bug-001",
+          "name": "Root Cause Analysis",
+          "agent": "system-architect",
+          "description": "Identify root cause and impact assessment",
+          "dependencies": ["req-bug-001"],
+          "input": {
+            "sources": ["req-bug-001.bug_analysis", "system_logs", "code_repository"],
+            "format": "analysis_request"
+          },
+          "output": {
+            "artifacts": ["root_cause_analysis", "impact_assessment", "fix_approach"],
+            "format": "analysis_report",
+            "validation": ["root_cause_identified"]
+          },
+          "estimated_duration_minutes": 30,
+          "timeout_minutes": 60
+        },
+        {
+          "stepId": "dev-bug-001",
+          "name": "Implement Bug Fix",
+          "agent": "fullstack-dev-swarm",
+          "description": "Implement fix for identified bug",
+          "dependencies": ["arch-bug-001"],
+          "input": {
+            "sources": ["arch-bug-001.root_cause_analysis", "arch-bug-001.fix_approach"],
+            "format": "fix_task"
+          },
+          "output": {
+            "artifacts": ["fixed_code", "regression_tests", "fix_documentation"],
+            "format": "code_package",
+            "validation": ["fix_implemented", "tests_pass"]
+          },
+          "estimated_duration_minutes": 120,
+          "timeout_minutes": 240
+        },
+        {
+          "stepId": "qa-bug-001",
+          "name": "Verify Bug Fix",
+          "agent": "quality-assurance",
+          "description": "Verify bug is fixed and no regression",
+          "dependencies": ["dev-bug-001"],
+          "input": {
+            "sources": ["dev-bug-001.fixed_code", "req-bug-001.bug_specification", "dev-bug-001.regression_tests"],
+            "format": "verification_request"
+          },
+          "output": {
+            "artifacts": ["verification_report", "regression_test_results"],
+            "format": "qa_report",
+            "validation": ["bug_fixed_confirmed", "no_regression"]
+          },
+          "estimated_duration_minutes": 45,
+          "timeout_minutes": 90,
+          "decision_point": {
+            "condition": "bug_still_present OR regression_detected",
+            "on_true": "goto:arch-bug-001",
+            "on_false": "continue"
+          }
+        },
+        {
+          "stepId": "sec-bug-001",
+          "name": "Security Impact Review",
+          "agent": "security-sentinel",
+          "description": "Review security implications of bug and fix",
+          "dependencies": ["dev-bug-001"],
+          "execution_condition": "severity_high_or_critical",
+          "input": {
+            "sources": ["dev-bug-001.fixed_code", "req-bug-001.bug_analysis"],
+            "format": "security_review_request"
+          },
+          "output": {
+            "artifacts": ["security_impact_report"],
+            "format": "security_report",
+            "validation": ["no_security_issues"]
+          },
+          "estimated_duration_minutes": 30,
+          "timeout_minutes": 60
+        }
+      ],
+      "error_handling": {
+        "on_timeout": "escalate",
+        "on_critical_failure": "notify_immediately",
+        "max_workflow_retries": 2
+      },
+      "success_criteria": [
+        "bug_fixed_and_verified",
+        "no_regression",
+        "security_cleared"
+      ],
+      "sla": {
+        "critical": "4_hours",
+        "high": "24_hours",
+        "medium": "1_week",
+        "low": "2_weeks"
+      }
+    },
+    {
+      "workflowId": "refactoring",
+      "name": "Code Refactoring Workflow",
+      "description": "Workflow for planned code refactoring to improve code quality and maintainability",
+      "trigger": {
+        "type": "manual",
+        "initiator": "tech_lead_or_architect",
+        "required_inputs": ["refactoring_target", "refactoring_goals", "scope"]
+      },
+      "steps": [
+        {
+          "stepId": "arch-ref-001",
+          "name": "Refactoring Analysis",
+          "agent": "system-architect",
+          "description": "Analyze code and create refactoring plan",
+          "input": {
+            "sources": ["trigger.refactoring_target", "trigger.refactoring_goals", "current_codebase"],
+            "format": "refactoring_request"
+          },
+          "output": {
+            "artifacts": ["refactoring_plan", "impact_analysis", "risk_assessment"],
+            "format": "refactoring_specification",
+            "validation": ["plan_complete", "risks_identified"]
+          },
+          "estimated_duration_minutes": 60,
+          "timeout_minutes": 120
+        },
+        {
+          "stepId": "qa-ref-001",
+          "name": "Pre-Refactoring Test Suite",
+          "agent": "quality-assurance",
+          "description": "Create comprehensive test suite before refactoring",
+          "dependencies": ["arch-ref-001"],
+          "input": {
+            "sources": ["arch-ref-001.refactoring_plan", "existing_tests"],
+            "format": "test_suite_request"
+          },
+          "output": {
+            "artifacts": ["baseline_tests", "coverage_report", "baseline_metrics"],
+            "format": "test_package",
+            "validation": ["adequate_coverage"]
+          },
+          "estimated_duration_minutes": 90,
+          "timeout_minutes": 180
+        },
+        {
+          "stepId": "dev-ref-001",
+          "name": "Execute Refactoring",
+          "agent": "fullstack-dev-swarm",
+          "description": "Perform code refactoring according to plan",
+          "dependencies": ["qa-ref-001"],
+          "input": {
+            "sources": ["arch-ref-001.refactoring_plan", "qa-ref-001.baseline_tests"],
+            "format": "refactoring_task"
+          },
+          "output": {
+            "artifacts": ["refactored_code", "migration_guide", "updated_documentation"],
+            "format": "code_package",
+            "validation": ["all_tests_pass", "no_functionality_change"]
+          },
+          "estimated_duration_minutes": 240,
+          "timeout_minutes": 480
+        },
+        {
+          "stepId": "qa-ref-002",
+          "name": "Post-Refactoring Validation",
+          "agent": "quality-assurance",
+          "description": "Validate refactoring maintains functionality",
+          "dependencies": ["dev-ref-001"],
+          "input": {
+            "sources": ["dev-ref-001.refactored_code", "qa-ref-001.baseline_tests", "qa-ref-001.baseline_metrics"],
+            "format": "validation_request"
+          },
+          "output": {
+            "artifacts": ["validation_report", "post_refactoring_metrics", "comparison_analysis"],
+            "format": "qa_report",
+            "validation": ["functionality_preserved", "metrics_improved"]
+          },
+          "estimated_duration_minutes": 60,
+          "timeout_minutes": 120,
+          "decision_point": {
+            "condition": "tests_fail OR functionality_changed",
+            "on_true": "goto:dev-ref-001",
+            "on_false": "continue"
+          }
+        },
+        {
+          "stepId": "sec-ref-001",
+          "name": "Security Review",
+          "agent": "security-sentinel",
+          "description": "Ensure refactoring doesn't introduce security issues",
+          "dependencies": ["dev-ref-001"],
+          "input": {
+            "sources": ["dev-ref-001.refactored_code"],
+            "format": "security_review_request"
+          },
+          "output": {
+            "artifacts": ["security_review_report"],
+            "format": "security_report",
+            "validation": ["no_new_vulnerabilities"]
+          },
+          "estimated_duration_minutes": 45,
+          "timeout_minutes": 90
+        }
+      ],
+      "error_handling": {
+        "on_test_failure": "rollback_and_retry",
+        "on_security_issue": "fix_and_revalidate",
+        "max_workflow_retries": 2
+      },
+      "success_criteria": [
+        "all_tests_pass",
+        "functionality_unchanged",
+        "code_quality_improved",
+        "no_security_issues",
+        "documentation_updated"
+      ]
+    },
+    {
+      "workflowId": "security-audit",
+      "name": "Security Audit Workflow",
+      "description": "Comprehensive security audit of system or component",
+      "trigger": {
+        "type": "scheduled_or_manual",
+        "initiator": "security_team_or_schedule",
+        "required_inputs": ["audit_scope", "compliance_requirements"]
+      },
+      "steps": [
+        {
+          "stepId": "sec-audit-001",
+          "name": "Security Scan",
+          "agent": "security-sentinel",
+          "description": "Automated security vulnerability scanning",
+          "input": {
+            "sources": ["trigger.audit_scope", "codebase", "dependencies", "infrastructure_config"],
+            "format": "security_scan_request"
+          },
+          "output": {
+            "artifacts": ["vulnerability_report", "dependency_audit", "config_issues"],
+            "format": "scan_report",
+            "validation": ["scan_complete"]
+          },
+          "estimated_duration_minutes": 45,
+          "timeout_minutes": 90
+        },
+        {
+          "stepId": "sec-audit-002",
+          "name": "Manual Security Review",
+          "agent": "security-sentinel",
+          "description": "Manual code review for security issues",
+          "dependencies": ["sec-audit-001"],
+          "input": {
+            "sources": ["sec-audit-001.vulnerability_report", "codebase", "architecture_docs"],
+            "format": "manual_review_request"
+          },
+          "output": {
+            "artifacts": ["manual_review_report", "code_security_issues", "architectural_concerns"],
+            "format": "review_report",
+            "validation": ["review_complete"]
+          },
+          "estimated_duration_minutes": 120,
+          "timeout_minutes": 240
+        },
+        {
+          "stepId": "sec-audit-003",
+          "name": "Penetration Testing",
+          "agent": "security-sentinel",
+          "description": "Simulated attack testing",
+          "dependencies": ["sec-audit-002"],
+          "execution_condition": "high_risk_components_identified",
+          "input": {
+            "sources": ["sec-audit-002.manual_review_report", "system_endpoints"],
+            "format": "pentest_request"
+          },
+          "output": {
+            "artifacts": ["pentest_report", "exploitable_vulnerabilities"],
+            "format": "pentest_report",
+            "validation": ["testing_complete"]
+          },
+          "estimated_duration_minutes": 180,
+          "timeout_minutes": 360
+        },
+        {
+          "stepId": "sec-audit-004",
+          "name": "Compliance Verification",
+          "agent": "security-sentinel",
+          "description": "Verify compliance with security standards",
+          "dependencies": ["sec-audit-002"],
+          "input": {
+            "sources": ["trigger.compliance_requirements", "all_audit_artifacts"],
+            "format": "compliance_check_request"
+          },
+          "output": {
+            "artifacts": ["compliance_report", "gaps_identified", "recommendations"],
+            "format": "compliance_report",
+            "validation": ["compliance_checked"]
+          },
+          "estimated_duration_minutes": 60,
+          "timeout_minutes": 120
+        },
+        {
+          "stepId": "plan-audit-001",
+          "name": "Remediation Planning",
+          "agent": "implementation-planner",
+          "description": "Create plan to address security issues",
+          "dependencies": ["sec-audit-001", "sec-audit-002", "sec-audit-003", "sec-audit-004"],
+          "input": {
+            "sources": ["all_security_reports"],
+            "format": "remediation_planning_request"
+          },
+          "output": {
+            "artifacts": ["remediation_plan", "prioritized_tasks", "timeline"],
+            "format": "implementation_plan",
+            "validation": ["plan_complete"]
+          },
+          "estimated_duration_minutes": 90,
+          "timeout_minutes": 180
+        },
+        {
+          "stepId": "dev-audit-001",
+          "name": "Implement Security Fixes",
+          "agent": "fullstack-dev-swarm",
+          "description": "Implement critical security fixes",
+          "dependencies": ["plan-audit-001"],
+          "execution_condition": "critical_vulnerabilities_found",
+          "input": {
+            "sources": ["plan-audit-001.remediation_plan"],
+            "format": "security_fix_task"
+          },
+          "output": {
+            "artifacts": ["security_fixes", "verification_tests"],
+            "format": "code_package",
+            "validation": ["fixes_implemented"]
+          },
+          "estimated_duration_minutes": 240,
+          "timeout_minutes": 480
+        },
+        {
+          "stepId": "sec-audit-005",
+          "name": "Verify Fixes",
+          "agent": "security-sentinel",
+          "description": "Verify security issues are resolved",
+          "dependencies": ["dev-audit-001"],
+          "execution_condition": "fixes_were_implemented",
+          "input": {
+            "sources": ["dev-audit-001.security_fixes"],
+            "format": "verification_request"
+          },
+          "output": {
+            "artifacts": ["verification_report"],
+            "format": "verification_report",
+            "validation": ["issues_resolved"]
+          },
+          "estimated_duration_minutes": 60,
+          "timeout_minutes": 120
+        }
+      ],
+      "error_handling": {
+        "on_critical_vulnerability": "immediate_escalation",
+        "on_compliance_failure": "notify_stakeholders",
+        "max_workflow_retries": 1
+      },
+      "success_criteria": [
+        "audit_complete",
+        "critical_vulnerabilities_addressed",
+        "compliance_requirements_met",
+        "remediation_plan_created"
+      ],
+      "notifications": {
+        "on_critical_finding": ["security_team", "tech_lead", "management"],
+        "on_complete": ["security_team", "compliance_team"]
+      }
+    },
+    {
+      "workflowId": "performance-optimization",
+      "name": "Performance Optimization Workflow",
+      "description": "Workflow for analyzing and optimizing system performance",
+      "trigger": {
+        "type": "manual_or_threshold",
+        "initiator": "performance_monitoring_or_tech_lead",
+        "required_inputs": ["performance_issue", "target_metrics", "scope"]
+      },
+      "steps": [
+        {
+          "stepId": "arch-perf-001",
+          "name": "Performance Analysis",
+          "agent": "system-architect",
+          "description": "Analyze performance bottlenecks and issues",
+          "input": {
+            "sources": ["trigger.performance_issue", "performance_metrics", "system_logs"],
+            "format": "performance_analysis_request"
+          },
+          "output": {
+            "artifacts": ["performance_analysis", "bottleneck_identification", "optimization_recommendations"],
+            "format": "analysis_report",
+            "validation": ["bottlenecks_identified"]
+          },
+          "estimated_duration_minutes": 60,
+          "timeout_minutes": 120
+        },
+        {
+          "stepId": "plan-perf-001",
+          "name": "Optimization Planning",
+          "agent": "implementation-planner",
+          "description": "Create detailed optimization plan",
+          "dependencies": ["arch-perf-001"],
+          "input": {
+            "sources": ["arch-perf-001.performance_analysis", "arch-perf-001.optimization_recommendations", "trigger.target_metrics"],
+            "format": "optimization_planning_request"
+          },
+          "output": {
+            "artifacts": ["optimization_plan", "task_breakdown", "expected_improvements"],
+            "format": "implementation_plan",
+            "validation": ["plan_complete", "targets_defined"]
+          },
+          "estimated_duration_minutes": 45,
+          "timeout_minutes": 90
+        },
+        {
+          "stepId": "qa-perf-001",
+          "name": "Baseline Performance Testing",
+          "agent": "quality-assurance",
+          "description": "Establish performance baseline",
+          "dependencies": ["plan-perf-001"],
+          "input": {
+            "sources": ["current_system", "performance_test_scenarios"],
+            "format": "performance_test_request"
+          },
+          "output": {
+            "artifacts": ["baseline_metrics", "performance_test_suite", "bottleneck_confirmation"],
+            "format": "performance_report",
+            "validation": ["baseline_established"]
+          },
+          "estimated_duration_minutes": 90,
+          "timeout_minutes": 180
+        },
+        {
+          "stepId": "dev-perf-001",
+          "name": "Implement Optimizations",
+          "agent": "fullstack-dev-swarm",
+          "description": "Implement performance optimizations",
+          "dependencies": ["qa-perf-001"],
+          "input": {
+            "sources": ["plan-perf-001.optimization_plan", "arch-perf-001.optimization_recommendations"],
+            "format": "optimization_task"
+          },
+          "output": {
+            "artifacts": ["optimized_code", "optimization_documentation", "performance_tests"],
+            "format": "code_package",
+            "validation": ["optimizations_implemented", "tests_pass"]
+          },
+          "estimated_duration_minutes": 180,
+          "timeout_minutes": 360
+        },
+        {
+          "stepId": "qa-perf-002",
+          "name": "Performance Validation",
+          "agent": "quality-assurance",
+          "description": "Validate performance improvements",
+          "dependencies": ["dev-perf-001"],
+          "input": {
+            "sources": ["dev-perf-001.optimized_code", "qa-perf-001.baseline_metrics", "qa-perf-001.performance_test_suite"],
+            "format": "validation_request"
+          },
+          "output": {
+            "artifacts": ["post_optimization_metrics", "improvement_analysis", "validation_report"],
+            "format": "performance_report",
+            "validation": ["improvements_verified"]
+          },
+          "estimated_duration_minutes": 90,
+          "timeout_minutes": 180,
+          "decision_point": {
+            "condition": "targets_not_met",
+            "on_true": "goto:arch-perf-001",
+            "on_false": "continue"
+          }
+        },
+        {
+          "stepId": "qa-perf-003",
+          "name": "Regression Testing",
+          "agent": "quality-assurance",
+          "description": "Ensure optimizations don't break functionality",
+          "dependencies": ["dev-perf-001"],
+          "input": {
+            "sources": ["dev-perf-001.optimized_code", "regression_test_suite"],
+            "format": "regression_test_request"
+          },
+          "output": {
+            "artifacts": ["regression_test_results"],
+            "format": "qa_report",
+            "validation": ["no_regression"]
+          },
+          "estimated_duration_minutes": 60,
+          "timeout_minutes": 120,
+          "decision_point": {
+            "condition": "regression_detected",
+            "on_true": "goto:dev-perf-001",
+            "on_false": "continue"
+          }
+        }
+      ],
+      "parallel_execution": [
+        {
+          "group_id": "validation-phase",
+          "steps": ["qa-perf-002", "qa-perf-003"],
+          "wait_for_all": true
+        }
+      ],
+      "error_handling": {
+        "on_regression": "rollback_and_retry",
+        "on_targets_not_met": "reassess_and_continue",
+        "max_workflow_retries": 2
+      },
+      "success_criteria": [
+        "performance_targets_met",
+        "no_functionality_regression",
+        "optimizations_documented"
+      ],
+      "notifications": {
+        "on_targets_met": ["tech_lead", "stakeholders"],
+        "on_targets_not_met": ["tech_lead"]
+      }
+    }
+  ],
+  "workflow_orchestration": {
+    "execution_modes": {
+      "sequential": "Execute steps one after another",
+      "parallel": "Execute independent steps concurrently",
+      "conditional": "Execute based on decision points",
+      "loop": "Repeat steps until condition met"
+    },
+    "monitoring": {
+      "track_progress": true,
+      "collect_metrics": true,
+      "enable_logging": true,
+      "alert_on_delays": true
+    },
+    "resource_management": {
+      "agent_pooling": true,
+      "load_balancing": true,
+      "priority_queuing": true
+    }
+  },
+  "common_patterns": {
+    "validation_gate": {
+      "description": "Quality gate that must pass before proceeding",
+      "components": ["validation_criteria", "approval_required", "fallback_action"]
+    },
+    "feedback_loop": {
+      "description": "Iterative refinement based on feedback",
+      "components": ["initial_attempt", "review", "refinement", "max_iterations"]
+    },
+    "parallel_review": {
+      "description": "Multiple agents review simultaneously",
+      "components": ["parallel_reviewers", "consolidation_step", "conflict_resolution"]
+    }
+  }
+}

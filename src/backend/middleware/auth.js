@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
-const securityConfig = require('../config/security');
+
+// Secret key for JWT signing and encryption
+const SECRET_KEY = process.env.JWT_SECRET || 'your-secret-key';
 
 // Middleware for JWT authentication
 const authMiddleware = (req, res, next) => {
@@ -7,20 +9,10 @@ const authMiddleware = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer token
 
-    if (!token) {
-        return res.status(401).json({ 
-            error: 'Unauthorized', 
-            message: 'No token provided' 
-        });
-    }
+    if (!token) return res.sendStatus(403); // Forbidden if no token
 
-    jwt.verify(token, securityConfig.jwt.secret, (err, user) => {
-        if (err) {
-            return res.status(403).json({ 
-                error: 'Forbidden', 
-                message: 'Invalid or expired token' 
-            });
-        }
+    jwt.verify(token, SECRET_KEY, (err, user) => {
+        if (err) return res.sendStatus(403); // Forbidden if token is invalid or expired
 
         req.user = user; // Attach user info to request
         next(); // Proceed to the next middleware or route
@@ -37,8 +29,4 @@ const roleAuthorization = (roles) => {
     };
 };
 
-module.exports = { 
-    authMiddleware, 
-    authenticate: authMiddleware, // Alias for convenience
-    roleAuthorization 
-};
+module.exports = { authMiddleware, roleAuthorization };

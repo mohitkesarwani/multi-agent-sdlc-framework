@@ -1,0 +1,213 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": "1.0.0",
+  "description": "Prompt templates for different agents in Multi-Agent SDLC Framework",
+  "system_prompts": {
+    "requirement-agent": {
+      "base_prompt": "You are a Requirement Agent specialized in analyzing and clarifying project requirements. Your role is to translate business needs into clear, actionable technical specifications. You excel at identifying ambiguities, asking clarifying questions, and ensuring all stakeholders are aligned on project goals.",
+      "personality_traits": [
+        "detail-oriented",
+        "analytical",
+        "communicative",
+        "empathetic to user needs"
+      ],
+      "constraints": [
+        "Always validate requirement completeness",
+        "Ensure requirements are testable and measurable",
+        "Identify conflicts and dependencies",
+        "Maintain requirements traceability"
+      ]
+    },
+    "system-architect": {
+      "base_prompt": "You are a System Architect with deep expertise in designing scalable, maintainable, and robust software systems. You evaluate technical trade-offs, select appropriate technologies, and create architectural designs that balance current needs with future growth. Your decisions are guided by industry best practices and proven design patterns.",
+      "personality_traits": [
+        "strategic thinker",
+        "technology-aware",
+        "pragmatic",
+        "quality-focused"
+      ],
+      "constraints": [
+        "Consider scalability and performance implications",
+        "Evaluate security and compliance requirements",
+        "Document architectural decisions and rationale",
+        "Balance technical excellence with practical constraints"
+      ]
+    },
+    "implementation-planner": {
+      "base_prompt": "You are an Implementation Planner skilled in breaking down complex projects into manageable tasks. You create detailed implementation roadmaps, estimate effort accurately, and identify dependencies and risks. Your plans enable teams to execute efficiently and deliver on time.",
+      "personality_traits": [
+        "organized",
+        "analytical",
+        "risk-aware",
+        "resource-conscious"
+      ],
+      "constraints": [
+        "Create realistic and achievable plans",
+        "Identify and manage dependencies",
+        "Account for risks and contingencies",
+        "Ensure plans align with team capacity"
+      ]
+    },
+    "fullstack-dev-swarm": {
+      "base_prompt": "You are a FullStack Developer with expertise across frontend, backend, and database technologies. You write clean, maintainable, and efficient code following best practices and design patterns. You are committed to code quality, testing, and continuous improvement.",
+      "personality_traits": [
+        "technically proficient",
+        "detail-oriented",
+        "collaborative",
+        "quality-focused"
+      ],
+      "constraints": [
+        "Follow coding standards and best practices",
+        "Write comprehensive tests",
+        "Document code appropriately",
+        "Optimize for performance and maintainability"
+      ]
+    },
+    "quality-assurance": {
+      "base_prompt": "You are a Quality Assurance Specialist dedicated to ensuring software quality and reliability. You design comprehensive test strategies, execute thorough testing, and identify defects before they reach production. Your work ensures that software meets requirements and delivers a great user experience.",
+      "personality_traits": [
+        "meticulous",
+        "methodical",
+        "user-focused",
+        "quality-driven"
+      ],
+      "constraints": [
+        "Ensure comprehensive test coverage",
+        "Validate against all requirements",
+        "Report defects clearly and accurately",
+        "Verify fixes thoroughly"
+      ]
+    },
+    "security-sentinel": {
+      "base_prompt": "You are a Security Sentinel responsible for identifying and mitigating security vulnerabilities. You conduct thorough security audits, enforce security best practices, and ensure compliance with security standards. Your vigilance protects systems and data from threats.",
+      "personality_traits": [
+        "security-conscious",
+        "vigilant",
+        "proactive",
+        "compliance-aware"
+      ],
+      "constraints": [
+        "Identify all security vulnerabilities",
+        "Recommend practical security solutions",
+        "Ensure compliance with standards",
+        "Prioritize vulnerabilities by risk"
+      ]
+    }
+  },
+  "task_prompts": {
+    "analyze_requirements": {
+      "template": "Analyze the following requirement and create a detailed technical specification:\n\nRequirement: {{requirement_description}}\nStakeholder: {{stakeholder_name}}\nPriority: {{priority_level}}\n\nProvide:\n1. Clarified requirement statement\n2. Functional requirements breakdown\n3. Non-functional requirements\n4. Acceptance criteria\n5. Dependencies and constraints\n6. Estimated complexity\n7. Questions or ambiguities to resolve",
+      "variables": ["requirement_description", "stakeholder_name", "priority_level"],
+      "output_format": "structured_json",
+      "validation_rules": ["must_have_acceptance_criteria", "must_identify_dependencies"]
+    },
+    "design_architecture": {
+      "template": "Design a system architecture based on the following requirements:\n\nFunctional Requirements:\n{{functional_requirements}}\n\nNon-Functional Requirements:\n{{non_functional_requirements}}\n\nConstraints:\n{{constraints}}\n\nScale Requirements:\n{{scale_requirements}}\n\nProvide:\n1. High-level architecture diagram (description)\n2. Component breakdown and responsibilities\n3. Technology stack recommendation with justification\n4. Data model design\n5. API specifications\n6. Deployment architecture\n7. Scalability and performance considerations\n8. Security architecture\n9. Trade-offs and alternatives considered",
+      "variables": ["functional_requirements", "non_functional_requirements", "constraints", "scale_requirements"],
+      "output_format": "architecture_document",
+      "validation_rules": ["must_justify_technology_choices", "must_address_nfrs"]
+    },
+    "create_implementation_plan": {
+      "template": "Create a detailed implementation plan for the following system design:\n\nArchitecture Design:\n{{architecture_design}}\n\nRequirements:\n{{requirements_list}}\n\nTeam Capacity: {{team_capacity}}\nTimeline: {{timeline_constraints}}\n\nProvide:\n1. Task breakdown structure with detailed descriptions\n2. Effort estimates for each task (hours/days)\n3. Task dependencies and critical path\n4. Prioritized task list\n5. Implementation phases and milestones\n6. Resource allocation recommendations\n7. Risk assessment and mitigation strategies\n8. Timeline with buffer for uncertainties",
+      "variables": ["architecture_design", "requirements_list", "team_capacity", "timeline_constraints"],
+      "output_format": "implementation_plan",
+      "validation_rules": ["must_have_effort_estimates", "must_identify_dependencies"]
+    },
+    "implement_feature": {
+      "template": "Implement the following feature:\n\nTask: {{task_description}}\n\nAcceptance Criteria:\n{{acceptance_criteria}}\n\nTechnical Specifications:\n{{technical_specifications}}\n\nDependencies: {{dependencies}}\n\nProvide:\n1. Complete implementation code\n2. Unit tests with good coverage\n3. Integration tests if applicable\n4. Code documentation\n5. Implementation notes and decisions made\n6. Any deviations from specifications with justification",
+      "variables": ["task_description", "acceptance_criteria", "technical_specifications", "dependencies"],
+      "output_format": "code_package",
+      "validation_rules": ["must_include_tests", "must_meet_acceptance_criteria", "must_follow_standards"]
+    },
+    "create_test_plan": {
+      "template": "Create a comprehensive test plan for the following:\n\nRequirements:\n{{requirements_to_test}}\n\nAcceptance Criteria:\n{{acceptance_criteria}}\n\nImplementation Details:\n{{implementation_artifacts}}\n\nTest Environment: {{test_environment_spec}}\n\nProvide:\n1. Test strategy and approach\n2. Detailed test cases covering all requirements\n3. Test data requirements\n4. Test environment setup\n5. Acceptance test scenarios\n6. Performance and load test scenarios\n7. Regression test plan\n8. Test execution schedule\n9. Pass/fail criteria",
+      "variables": ["requirements_to_test", "acceptance_criteria", "implementation_artifacts", "test_environment_spec"],
+      "output_format": "test_plan",
+      "validation_rules": ["must_cover_all_requirements", "must_include_acceptance_tests"]
+    },
+    "security_audit": {
+      "template": "Conduct a comprehensive security audit of the following:\n\nCode Repository: {{code_to_review}}\n\nArchitecture: {{architecture_document}}\n\nSecurity Requirements:\n{{security_requirements}}\n\nCompliance Standards: {{compliance_standards}}\n\nProvide:\n1. Security vulnerability assessment\n2. Code security issues identified\n3. Architecture security concerns\n4. Compliance gaps\n5. Threat model\n6. Security recommendations with priority\n7. Remediation steps for each issue\n8. Security metrics and risk score\n9. Best practices not followed",
+      "variables": ["code_to_review", "architecture_document", "security_requirements", "compliance_standards"],
+      "output_format": "security_report",
+      "validation_rules": ["must_prioritize_by_severity", "must_provide_remediation"]
+    }
+  },
+  "context_building_prompts": {
+    "gather_project_context": {
+      "template": "Before proceeding with {{task_type}}, gather the following context:\n\n1. Project background and goals\n2. Existing documentation and artifacts\n3. Technical constraints and limitations\n4. Stakeholder expectations\n5. Timeline and resource constraints\n6. Related work or dependencies\n\nContext to analyze:\n{{context_data}}",
+      "variables": ["task_type", "context_data"]
+    },
+    "analyze_dependencies": {
+      "template": "Analyze dependencies for {{component_name}}:\n\n1. Direct dependencies (upstream)\n2. Dependent components (downstream)\n3. Shared resources or services\n4. Integration points\n5. Data dependencies\n6. Temporal dependencies\n\nComponent details:\n{{component_details}}",
+      "variables": ["component_name", "component_details"]
+    },
+    "assess_impact": {
+      "template": "Assess the impact of {{change_description}} on:\n\n1. Existing functionality\n2. System architecture\n3. Other components and modules\n4. User experience\n5. Performance and scalability\n6. Security and compliance\n7. Testing and quality assurance\n8. Documentation\n\nChange details:\n{{change_details}}",
+      "variables": ["change_description", "change_details"]
+    }
+  },
+  "error_handling_prompts": {
+    "handle_ambiguous_requirements": {
+      "template": "The following requirement is ambiguous or incomplete:\n\n{{ambiguous_requirement}}\n\nIdentify:\n1. Specific ambiguities or gaps\n2. Missing information needed\n3. Possible interpretations\n4. Questions to ask stakeholders\n5. Assumptions that could be made (with risks)\n6. Recommendation on how to proceed",
+      "variables": ["ambiguous_requirement"]
+    },
+    "handle_conflicting_requirements": {
+      "template": "Conflicting requirements detected:\n\nRequirement 1: {{requirement_1}}\nRequirement 2: {{requirement_2}}\n\nAnalyze:\n1. Nature of the conflict\n2. Impact of each requirement\n3. Possible resolutions\n4. Trade-offs for each resolution\n5. Recommended approach\n6. Stakeholders to involve in decision",
+      "variables": ["requirement_1", "requirement_2"]
+    },
+    "handle_implementation_error": {
+      "template": "Implementation error encountered:\n\nError: {{error_message}}\nContext: {{error_context}}\nCode Section: {{code_section}}\n\nProvide:\n1. Root cause analysis\n2. Impact assessment\n3. Fix recommendation\n4. Prevention strategies\n5. Whether this requires design changes",
+      "variables": ["error_message", "error_context", "code_section"]
+    },
+    "handle_test_failure": {
+      "template": "Test failure detected:\n\nTest: {{test_name}}\nFailure: {{failure_message}}\nExpected: {{expected_result}}\nActual: {{actual_result}}\n\nAnalyze:\n1. Root cause of failure\n2. Whether test is correct or implementation\n3. Impact on requirements fulfillment\n4. Recommended action\n5. Related tests that may be affected",
+      "variables": ["test_name", "failure_message", "expected_result", "actual_result"]
+    },
+    "handle_security_vulnerability": {
+      "template": "Security vulnerability identified:\n\nVulnerability: {{vulnerability_type}}\nSeverity: {{severity_level}}\nLocation: {{code_location}}\nDescription: {{vulnerability_description}}\n\nProvide:\n1. Detailed risk assessment\n2. Exploitation scenario\n3. Immediate mitigation steps\n4. Permanent fix recommendation\n5. Verification steps\n6. Similar vulnerabilities to check",
+      "variables": ["vulnerability_type", "severity_level", "code_location", "vulnerability_description"]
+    }
+  },
+  "review_prompts": {
+    "code_review": {
+      "template": "Review the following code submission:\n\nPull Request: {{pr_description}}\nCode Changes: {{code_diff}}\nRelated Requirements: {{requirements}}\n\nReview for:\n1. Code quality and adherence to standards\n2. Implementation correctness\n3. Test coverage adequacy\n4. Performance implications\n5. Security concerns\n6. Documentation completeness\n7. Maintainability\n8. Suggested improvements\n\nProvide detailed feedback with specific recommendations.",
+      "variables": ["pr_description", "code_diff", "requirements"]
+    },
+    "architecture_review": {
+      "template": "Review the proposed architecture:\n\nArchitecture Document: {{architecture_doc}}\nRequirements: {{requirements}}\nConstraints: {{constraints}}\n\nEvaluate:\n1. Alignment with requirements\n2. Scalability and performance\n3. Security architecture\n4. Technology choices\n5. Component design\n6. Integration approach\n7. Deployment strategy\n8. Cost implications\n9. Risks and mitigation\n10. Alternative approaches\n\nProvide approval or requested changes with justification.",
+      "variables": ["architecture_doc", "requirements", "constraints"]
+    },
+    "test_coverage_review": {
+      "template": "Review test coverage for:\n\nComponent: {{component_name}}\nTest Results: {{test_results}}\nCoverage Report: {{coverage_report}}\nRequirements: {{requirements}}\n\nAssess:\n1. Test coverage percentage and quality\n2. Requirements coverage\n3. Edge cases and boundary conditions\n4. Negative test scenarios\n5. Performance and load tests\n6. Integration test completeness\n7. Gaps in test coverage\n8. Recommendations for additional tests",
+      "variables": ["component_name", "test_results", "coverage_report", "requirements"]
+    },
+    "security_review": {
+      "template": "Conduct security review for:\n\nComponent: {{component_name}}\nSecurity Scan Results: {{scan_results}}\nArchitecture: {{architecture_overview}}\n\nReview:\n1. Identified vulnerabilities and severity\n2. Security best practices compliance\n3. Authentication and authorization\n4. Data protection and encryption\n5. Input validation and sanitization\n6. Dependency vulnerabilities\n7. Compliance with security standards\n8. Remediation recommendations\n9. Residual risks\n\nProvide security approval status and required actions.",
+      "variables": ["component_name", "scan_results", "architecture_overview"]
+    },
+    "requirement_validation": {
+      "template": "Validate requirements specification:\n\nRequirements Document: {{requirements_doc}}\nStakeholder Feedback: {{stakeholder_feedback}}\n\nValidate:\n1. Completeness of requirements\n2. Clarity and unambiguity\n3. Testability\n4. Consistency and no conflicts\n5. Feasibility\n6. Traceability\n7. Stakeholder alignment\n8. Missing requirements\n9. Suggested improvements",
+      "variables": ["requirements_doc", "stakeholder_feedback"]
+    }
+  },
+  "validation_prompts": {
+    "validate_output_quality": {
+      "template": "Validate the quality of {{output_type}} produced by {{agent_name}}:\n\nOutput: {{output_content}}\nExpected Standards: {{quality_standards}}\n\nCheck:\n1. Completeness against requirements\n2. Accuracy and correctness\n3. Adherence to standards\n4. Consistency\n5. Clarity and understandability\n6. Actionability\n\nProvide validation result: PASS/FAIL with detailed feedback.",
+      "variables": ["output_type", "agent_name", "output_content", "quality_standards"]
+    },
+    "validate_integration": {
+      "template": "Validate integration between components:\n\nComponent A: {{component_a}}\nComponent B: {{component_b}}\nIntegration Specification: {{integration_spec}}\n\nVerify:\n1. Interface compatibility\n2. Data format consistency\n3. Communication protocol\n4. Error handling\n5. Performance under load\n6. Security of integration point\n\nProvide validation results and issues found.",
+      "variables": ["component_a", "component_b", "integration_spec"]
+    }
+  },
+  "collaboration_prompts": {
+    "request_clarification": {
+      "template": "Agent {{requesting_agent}} requests clarification from {{target_agent}}:\n\nContext: {{context}}\nQuestion: {{question}}\nUrgency: {{urgency_level}}\n\nPlease provide clarification with:\n1. Direct answer to question\n2. Supporting details\n3. References to relevant documentation\n4. Additional context if helpful",
+      "variables": ["requesting_agent", "target_agent", "context", "question", "urgency_level"]
+    },
+    "escalate_issue": {
+      "template": "Agent {{escalating_agent}} escalates an issue:\n\nIssue: {{issue_description}}\nImpact: {{impact_level}}\nAttempted Solutions: {{attempted_solutions}}\nRecommended Action: {{recommended_action}}\n\nRequire:\n1. Decision or guidance\n2. Additional resources\n3. Priority adjustment\n4. Scope change approval",
+      "variables": ["escalating_agent", "issue_description", "impact_level", "attempted_solutions", "recommended_action"]
+    }
+  }
+}
