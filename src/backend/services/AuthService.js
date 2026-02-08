@@ -214,7 +214,7 @@ class AuthService {
             throw new Error('Password must contain at least one number');
         }
 
-        if (config.requireSpecialChars && !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+        if (config.requireSpecialChars && !/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
             throw new Error('Password must contain at least one special character');
         }
     }

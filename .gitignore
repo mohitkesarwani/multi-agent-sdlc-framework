@@ -54,4 +54,4 @@ secrets/
 
 # Agent-Specific Caches
 .agent-cache/
-agent-logs/
+agent-logs/test-imports.js
