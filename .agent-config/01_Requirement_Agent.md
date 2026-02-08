@@ -104,6 +104,42 @@ When a business decision is made:
 5. ❌ Do NOT skip the documentation step
 6. ❌ Do NOT proceed if ambiguities remain
 
+## Project-Specific Context
+
+### Consumer Lending App (Australian Market)
+When working on the **consumer-lending-app** project, be aware of:
+
+**Key Features to Explore:**
+- Passwordless authentication (magic link)
+- User onboarding with KYC/AML compliance
+- Document upload and verification (driver license, payslips)
+- Identity verification via Green ID (Australian provider)
+- Bank account connection via Illion (CDR-compliant)
+- Credit bureau checks (Equifax/Experian)
+- Loan decision engine with risk assessment
+- Digital agreement signing via HelloSign
+
+**Compliance Requirements:**
+- Australian Privacy Act 1988
+- Consumer Data Right (CDR)
+- National Consumer Credit Protection Act 2009
+- Anti-Money Laundering (AML) regulations
+
+**Sprint Structure:**
+- Sprint 1: Auth + Onboarding + Document Upload + Basic Verifications
+- Sprint 2: Advanced Verification + Risk Scoring
+- Sprint 3: Loan Processing + Digital Signing
+- Sprint 4: Dashboard + Admin Panel
+- Sprint 5: Polish + Deploy
+
+**Key Questions to Ask:**
+- "What loan amounts and terms will be offered?"
+- "What credit score range are we targeting?"
+- "What documents are required for verification?"
+- "What turnaround time for loan decisions?"
+- "What interest rates and fees structure?"
+- "What repayment options will be available?"
+
 ---
 
 **Next Agent:** 02_System_Architect  
