@@ -1,21 +1,16 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import './Navbar.css';
-const Navbar = ({ user, onLogout }) => {
+
+const Navbar = () => {
     return (
         <nav className='navbar'>
-            <div className='nav-brand'>
-                <h2>SDLC Framework</h2>
-            </div>
-            <div className='nav-links'>
-                <a href='/dashboard'>Dashboard</a>
-                <a href='/projects'>Projects</a>
-                <a href='/tasks'>Tasks</a>
-            </div>
-            <div className='nav-user'>
-                <span>{user?.username}</span>
-                <button onClick={onLogout}>Logout</button>
-            </div>
+            <Link to='/dashboard'>Dashboard</Link>
+            <Link to='/projects'>Projects</Link>
+            <Link to='/tasks'>Tasks</Link>
+            <button>Logout</button>
         </nav>
     );
 };
+
 export default Navbar;
