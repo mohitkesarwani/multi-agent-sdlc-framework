@@ -30,6 +30,8 @@ jobs:
   prepare:
     name: Prepare Deployment
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       version: ${{ steps.version.outputs.version }}
       environment: ${{ steps.env.outputs.environment }}
@@ -116,6 +118,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [prepare, build]
     if: needs.prepare.outputs.environment == 'staging'
+    permissions:
+      contents: read
     environment:
       name: staging
       url: https://staging.example.com
@@ -153,6 +157,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [prepare, build]
     if: needs.prepare.outputs.environment == 'production'
+    permissions:
+      contents: read
     environment:
       name: production
       url: https://example.com
@@ -202,6 +208,8 @@ jobs:
     runs-on: ubuntu-latest
     if: failure() && (needs.deploy-staging.result == 'failure' || needs.deploy-production.result == 'failure')
     needs: [deploy-staging, deploy-production]
+    permissions:
+      contents: read
     environment:
       name: ${{ needs.prepare.outputs.environment }}
     
@@ -230,6 +238,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [prepare, deploy-staging, deploy-production]
     if: always()
+    permissions:
+      contents: read
     
     steps:
       - name: Deployment status
