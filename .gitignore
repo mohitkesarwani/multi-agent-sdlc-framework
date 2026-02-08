@@ -55,3 +55,7 @@ secrets/
 # Agent-Specific Caches
 .agent-cache/
 agent-logs/
+
+# Test scripts
+test-imports.js
+backend-validation-test.js

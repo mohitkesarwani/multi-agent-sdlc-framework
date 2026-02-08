@@ -1,1 +1,41 @@
-const mongoose = require('mongoose');\nconst bcrypt = require('bcryptjs');\n\nconst userSchema = new mongoose.Schema({\n    userId: { type: mongoose.Schema.Types.ObjectId, auto: true },\n    name: { type: String, required: true },\n    email: { type: String, required: true, unique: true, lowercase: true },\n    password: { type: String, required: true },\n    role: { type: String, enum: ['admin', 'agent', 'manager', 'viewer'], required: true },\n    department: { type: String },\n    createdAt: { type: Date, default: Date.now },\n    updatedAt: { type: Date, default: Date.now }\n});\n\n// Middleware to hash password before saving user\nuserSchema.pre('save', async function(next) {\n    if (!this.isModified('password')) return next();\n    this.password = await bcrypt.hash(this.password, 10);\n    next();\n});\n\n// Method to compare password\nuserSchema.methods.comparePassword = async function(candidatePassword) {\n    return await bcrypt.compare(candidatePassword, this.password);\n};\n\nconst User = mongoose.model('User', userSchema);\nmodule.exports = User;\n
+const mongoose = require('mongoose');
+
+const userSchema = new mongoose.Schema({
+    username: { type: String, required: true, unique: true, trim: true, minlength: 3 },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    password: { type: String, required: true, minlength: 8 },
+    role: { 
+        type: String, 
+        enum: ['admin', 'agent', 'manager', 'viewer', 'user', 'developer'], 
+        default: 'user',
+        required: true 
+    },
+    department: { type: String },
+    lastLogin: { type: Date },
+    lastLogout: { type: Date },
+    isActive: { type: Boolean, default: true },
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
+}, {
+    timestamps: true // Automatically manage createdAt and updatedAt
+});
+
+// Index for faster queries
+userSchema.index({ email: 1 });
+userSchema.index({ username: 1 });
+
+// Method to compare password (for backward compatibility if needed)
+userSchema.methods.comparePassword = async function(candidatePassword) {
+    const bcrypt = require('bcryptjs');
+    return await bcrypt.compare(candidatePassword, this.password);
+};
+
+// Remove password from JSON responses
+userSchema.methods.toJSON = function() {
+    const obj = this.toObject();
+    delete obj.password;
+    return obj;
+};
+
+const User = mongoose.model('User', userSchema);
+module.exports = User;
