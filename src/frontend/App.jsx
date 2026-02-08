@@ -1,24 +1,39 @@
-import React from 'react';
-import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom';
-import Home from './components/Home';
+import React, { useState } from 'react';
+import { AuthProvider } from './context/AuthContext';
+import Navbar from './components/Navbar';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
+import ProjectList from './components/ProjectList';
+import TaskBoard from './components/TaskBoard';
 
 const App = () => {
-  const isAuthenticated = false; // Replace with actual authentication logic
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [user, setUser] = useState(null);
 
-  return (
-    <Router>
-      <Switch>
-        <Route path='/' exact component={Home} />
-        <Route path='/login' component={Login} />
-        <Route path='/dashboard'>
-          {isAuthenticated ? <Dashboard /> : <Redirect to='/login' />}
-        </Route>
-        <Redirect to='/' />
-      </Switch>
-    </Router>
-  );
+    const handleLogin = (token, userData) => {
+        localStorage.setItem('token', token);
+        setIsAuthenticated(true);
+        setUser(userData);
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        setIsAuthenticated(false);
+        setUser(null);
+    };
+
+    return (
+        <AuthProvider>
+            {isAuthenticated ? (
+                <div>
+                    <Navbar user={user} onLogout={handleLogout} />
+                    <Dashboard />
+                </div>
+            ) : (
+                <Login />
+            )}
+        </AuthProvider>
+    );
 };
 
 export default App;
