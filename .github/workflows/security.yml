@@ -49,6 +49,8 @@ jobs:
   dependency-vulnerability-scan:
     name: Dependency Vulnerability Scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout code
@@ -96,6 +98,8 @@ jobs:
   secret-scanning:
     name: Secret Scanning
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout code
@@ -115,6 +119,9 @@ jobs:
     name: Container Security Scan
     runs-on: ubuntu-latest
     if: github.event_name == 'push' || github.event_name == 'schedule'
+    permissions:
+      contents: read
+      security-events: write
     
     steps:
       - name: Checkout code
@@ -162,6 +169,8 @@ jobs:
   security-headers-check:
     name: Security Headers Check
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout code
@@ -189,6 +198,8 @@ jobs:
   license-compliance:
     name: License Compliance Check
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout code
@@ -229,6 +240,8 @@ jobs:
       license-compliance
     ]
     if: always()
+    permissions:
+      contents: read
     
     steps:
       - name: Check security results
