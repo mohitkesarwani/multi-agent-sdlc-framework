@@ -1,273 +1,386 @@
 /**
  * Authentication Service
- * Handles business logic for user authentication and authorization
+ * 
+ * Handles all authentication-related business logic including:
+ * - User registration
+ * - User login/logout
+ * - Token generation and validation
+ * - Password hashing and verification
+ * - Refresh token management
+ * 
+ * @module services/AuthService
  */
 
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const securityConfig = require('../config/security');
+const { jwtConfig, passwordPolicy } = require('../config/security');
 
 class AuthService {
-    /**
-     * Register a new user
-     * @param {Object} userData - User registration data
-     * @returns {Promise<Object>} Created user object
-     */
-    async register(userData) {
-        try {
-            const { username, email, password, role } = userData;
+  /**
+   * Register a new user
+   * 
+   * @param {Object} userData - User registration data
+   * @param {string} userData.email - User email
+   * @param {string} userData.password - User password
+   * @param {string} userData.name - User name
+   * @param {string} userData.role - User role (optional)
+   * @returns {Promise<Object>} Created user object (without password)
+   * @throws {Error} If email already exists or validation fails
+   */
+  async register(userData) {
+    const { email, password, name, role = 'user' } = userData;
 
-            // Check if user already exists
-            const existingUser = await User.findOne({ 
-                $or: [{ email }, { username }] 
-            });
-
-            if (existingUser) {
-                throw new Error('User with this email or username already exists');
-            }
-
-            // Validate password strength
-            this.validatePassword(password);
-
-            // Hash password
-            const hashedPassword = await bcrypt.hash(
-                password, 
-                securityConfig.password.saltRounds
-            );
-
-            // Create new user
-            const user = new User({
-                username,
-                email,
-                password: hashedPassword,
-                role: role || 'user'
-            });
-
-            await user.save();
-
-            // Remove password from response
-            const userObject = user.toObject();
-            delete userObject.password;
-
-            return userObject;
-        } catch (error) {
-            throw new Error(`Registration failed: ${error.message}`);
-        }
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      throw new Error('User with this email already exists');
     }
 
-    /**
-     * Authenticate user and generate tokens
-     * @param {string} username - Username or email
-     * @param {string} password - User password
-     * @returns {Promise<Object>} Authentication tokens and user data
-     */
-    async login(username, password) {
-        try {
-            // Find user by username or email
-            const user = await User.findOne({
-                $or: [{ username }, { email: username }]
-            });
+    // Validate password policy
+    this.validatePassword(password);
 
-            if (!user) {
-                throw new Error('Invalid credentials');
-            }
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, passwordPolicy.bcryptRounds);
 
-            // Verify password
-            const isPasswordValid = await bcrypt.compare(password, user.password);
+    // Create new user
+    const user = new User({
+      email: email.toLowerCase(),
+      password: hashedPassword,
+      name,
+      role,
+    });
 
-            if (!isPasswordValid) {
-                throw new Error('Invalid credentials');
-            }
+    await user.save();
 
-            // Generate tokens
-            const accessToken = this.generateAccessToken(user);
-            const refreshToken = this.generateRefreshToken(user);
+    // Return user without password
+    return this.sanitizeUser(user);
+  }
 
-            // Update last login
-            user.lastLogin = new Date();
-            await user.save();
-
-            // Remove password from response
-            const userObject = user.toObject();
-            delete userObject.password;
-
-            return {
-                user: userObject,
-                accessToken,
-                refreshToken
-            };
-        } catch (error) {
-            throw new Error(`Login failed: ${error.message}`);
-        }
+  /**
+   * Authenticate user and generate tokens
+   * 
+   * @param {string} email - User email
+   * @param {string} password - User password
+   * @returns {Promise<Object>} Authentication result with tokens and user data
+   * @throws {Error} If credentials are invalid
+   */
+  async login(email, password) {
+    // Find user by email
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+    if (!user) {
+      throw new Error('Invalid credentials');
     }
 
-    /**
-     * Refresh access token
-     * @param {string} refreshToken - Refresh token
-     * @returns {Promise<Object>} New access token
-     */
-    async refreshToken(refreshToken) {
-        try {
-            // Verify refresh token
-            const decoded = jwt.verify(
-                refreshToken, 
-                securityConfig.jwt.refreshTokenSecret
-            );
-
-            // Find user
-            const user = await User.findById(decoded.userId);
-
-            if (!user) {
-                throw new Error('User not found');
-            }
-
-            // Generate new access token
-            const accessToken = this.generateAccessToken(user);
-
-            return { accessToken };
-        } catch (error) {
-            throw new Error(`Token refresh failed: ${error.message}`);
-        }
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      throw new Error('Invalid credentials');
     }
 
-    /**
-     * Logout user (invalidate tokens)
-     * @param {string} userId - User ID
-     * @returns {Promise<void>}
-     */
-    async logout(userId) {
-        try {
-            // In a production app, you might want to:
-            // 1. Add tokens to a blacklist
-            // 2. Clear refresh tokens from database
-            // 3. Log the logout event
-            
-            const user = await User.findById(userId);
-            if (user) {
-                user.lastLogout = new Date();
-                await user.save();
-            }
-        } catch (error) {
-            throw new Error(`Logout failed: ${error.message}`);
-        }
+    // Check if user is active
+    if (user.status !== 'active') {
+      throw new Error('Account is not active');
     }
 
-    /**
-     * Generate access token
-     * @param {Object} user - User object
-     * @returns {string} JWT access token
-     */
-    generateAccessToken(user) {
-        return jwt.sign(
-            { 
-                userId: user._id, 
-                username: user.username,
-                email: user.email,
-                role: user.role 
-            },
-            securityConfig.jwt.secret,
-            { 
-                expiresIn: securityConfig.jwt.expiresIn,
-                algorithm: securityConfig.jwt.algorithm
-            }
-        );
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
+    // Generate tokens
+    const accessToken = this.generateAccessToken(user);
+    const refreshToken = this.generateRefreshToken(user);
+
+    return {
+      user: this.sanitizeUser(user),
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  /**
+   * Refresh access token using refresh token
+   * 
+   * @param {string} refreshToken - Refresh token
+   * @returns {Promise<Object>} New access token
+   * @throws {Error} If refresh token is invalid
+   */
+  async refreshAccessToken(refreshToken) {
+    try {
+      // Verify refresh token
+      const decoded = jwt.verify(refreshToken, jwtConfig.refreshSecret);
+
+      // Find user
+      const user = await User.findById(decoded.userId);
+      if (!user || user.status !== 'active') {
+        throw new Error('Invalid refresh token');
+      }
+
+      // Generate new access token
+      const accessToken = this.generateAccessToken(user);
+
+      return {
+        accessToken,
+        user: this.sanitizeUser(user),
+      };
+    } catch (error) {
+      throw new Error('Invalid refresh token');
+    }
+  }
+
+  /**
+   * Change user password
+   * 
+   * @param {string} userId - User ID
+   * @param {string} currentPassword - Current password
+   * @param {string} newPassword - New password
+   * @returns {Promise<void>}
+   * @throws {Error} If current password is incorrect or new password is invalid
+   */
+  async changePassword(userId, currentPassword, newPassword) {
+    // Find user
+    const user = await User.findById(userId).select('+password');
+    if (!user) {
+      throw new Error('User not found');
     }
 
-    /**
-     * Generate refresh token
-     * @param {Object} user - User object
-     * @returns {string} JWT refresh token
-     */
-    generateRefreshToken(user) {
-        return jwt.sign(
-            { userId: user._id },
-            securityConfig.jwt.refreshTokenSecret,
-            { 
-                expiresIn: '30d',
-                algorithm: securityConfig.jwt.algorithm
-            }
-        );
+    // Verify current password
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isPasswordValid) {
+      throw new Error('Current password is incorrect');
     }
 
-    /**
-     * Validate password strength
-     * @param {string} password - Password to validate
-     * @throws {Error} If password doesn't meet requirements
-     */
-    validatePassword(password) {
-        const config = securityConfig.password;
+    // Validate new password
+    this.validatePassword(newPassword);
 
-        if (password.length < config.minLength) {
-            throw new Error(`Password must be at least ${config.minLength} characters long`);
-        }
-
-        if (config.requireUppercase && !/[A-Z]/.test(password)) {
-            throw new Error('Password must contain at least one uppercase letter');
-        }
-
-        if (config.requireLowercase && !/[a-z]/.test(password)) {
-            throw new Error('Password must contain at least one lowercase letter');
-        }
-
-        if (config.requireNumbers && !/\d/.test(password)) {
-            throw new Error('Password must contain at least one number');
-        }
-
-        if (config.requireSpecialChars && !/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
-            throw new Error('Password must contain at least one special character');
-        }
+    // Check if new password is different from current
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    if (isSamePassword) {
+      throw new Error('New password must be different from current password');
     }
 
-    /**
-     * Verify JWT token
-     * @param {string} token - JWT token
-     * @returns {Object} Decoded token payload
-     */
-    verifyToken(token) {
-        try {
-            return jwt.verify(token, securityConfig.jwt.secret);
-        } catch (error) {
-            throw new Error('Invalid or expired token');
-        }
+    // Hash and update password
+    user.password = await bcrypt.hash(newPassword, passwordPolicy.bcryptRounds);
+    await user.save();
+  }
+
+  /**
+   * Request password reset (generates reset token)
+   * 
+   * @param {string} email - User email
+   * @returns {Promise<string>} Password reset token
+   * @throws {Error} If user not found
+   */
+  async requestPasswordReset(email) {
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      // Don't reveal if email exists (security best practice)
+      return null;
     }
 
-    /**
-     * Change user password
-     * @param {string} userId - User ID
-     * @param {string} oldPassword - Current password
-     * @param {string} newPassword - New password
-     * @returns {Promise<void>}
-     */
-    async changePassword(userId, oldPassword, newPassword) {
-        try {
-            const user = await User.findById(userId);
+    // Generate reset token (valid for 1 hour)
+    const resetToken = jwt.sign(
+      { userId: user._id, type: 'password-reset' },
+      jwtConfig.secret,
+      { expiresIn: '1h' }
+    );
 
-            if (!user) {
-                throw new Error('User not found');
-            }
+    // In production, send this token via email instead of returning it
+    return resetToken;
+  }
 
-            // Verify old password
-            const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
+  /**
+   * Reset password using reset token
+   * 
+   * @param {string} resetToken - Password reset token
+   * @param {string} newPassword - New password
+   * @returns {Promise<void>}
+   * @throws {Error} If token is invalid or password is invalid
+   */
+  async resetPassword(resetToken, newPassword) {
+    try {
+      // Verify reset token
+      const decoded = jwt.verify(resetToken, jwtConfig.secret);
+      
+      if (decoded.type !== 'password-reset') {
+        throw new Error('Invalid token type');
+      }
 
-            if (!isPasswordValid) {
-                throw new Error('Current password is incorrect');
-            }
+      // Find user
+      const user = await User.findById(decoded.userId).select('+password');
+      if (!user) {
+        throw new Error('User not found');
+      }
 
-            // Validate new password
-            this.validatePassword(newPassword);
+      // Validate new password
+      this.validatePassword(newPassword);
 
-            // Hash new password
-            user.password = await bcrypt.hash(
-                newPassword, 
-                securityConfig.password.saltRounds
-            );
-
-            await user.save();
-        } catch (error) {
-            throw new Error(`Password change failed: ${error.message}`);
-        }
+      // Hash and update password
+      user.password = await bcrypt.hash(newPassword, passwordPolicy.bcryptRounds);
+      await user.save();
+    } catch (error) {
+      throw new Error('Invalid or expired reset token');
     }
+  }
+
+  /**
+   * Validate password against policy
+   * 
+   * @param {string} password - Password to validate
+   * @throws {Error} If password doesn't meet policy requirements
+   */
+  validatePassword(password) {
+    if (password.length < passwordPolicy.minLength) {
+      throw new Error(`Password must be at least ${passwordPolicy.minLength} characters long`);
+    }
+
+    if (passwordPolicy.requireUppercase && !/[A-Z]/.test(password)) {
+      throw new Error('Password must contain at least one uppercase letter');
+    }
+
+    if (passwordPolicy.requireLowercase && !/[a-z]/.test(password)) {
+      throw new Error('Password must contain at least one lowercase letter');
+    }
+
+    if (passwordPolicy.requireNumbers && !/\d/.test(password)) {
+      throw new Error('Password must contain at least one number');
+    }
+
+    if (passwordPolicy.requireSpecialChars && !/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      throw new Error('Password must contain at least one special character');
+    }
+  }
+
+  /**
+   * Generate JWT access token
+   * 
+   * @param {Object} user - User object
+   * @returns {string} JWT access token
+   */
+  generateAccessToken(user) {
+    return jwt.sign(
+      {
+        userId: user._id,
+        email: user.email,
+        role: user.role,
+        type: 'access',
+      },
+      jwtConfig.secret,
+      {
+        expiresIn: jwtConfig.expiresIn,
+        algorithm: jwtConfig.algorithm,
+        issuer: jwtConfig.issuer,
+        audience: jwtConfig.audience,
+      }
+    );
+  }
+
+  /**
+   * Generate JWT refresh token
+   * 
+   * @param {Object} user - User object
+   * @returns {string} JWT refresh token
+   */
+  generateRefreshToken(user) {
+    return jwt.sign(
+      {
+        userId: user._id,
+        type: 'refresh',
+      },
+      jwtConfig.refreshSecret,
+      {
+        expiresIn: jwtConfig.refreshExpiresIn,
+        algorithm: jwtConfig.algorithm,
+        issuer: jwtConfig.issuer,
+        audience: jwtConfig.audience,
+      }
+    );
+  }
+
+  /**
+   * Verify JWT token
+   * 
+   * @param {string} token - JWT token to verify
+   * @param {string} type - Token type ('access' or 'refresh')
+   * @returns {Object} Decoded token payload
+   * @throws {Error} If token is invalid
+   */
+  verifyToken(token, type = 'access') {
+    const secret = type === 'refresh' ? jwtConfig.refreshSecret : jwtConfig.secret;
+    return jwt.verify(token, secret);
+  }
+
+  /**
+   * Remove sensitive data from user object
+   * 
+   * @param {Object} user - User object
+   * @returns {Object} Sanitized user object
+   */
+  sanitizeUser(user) {
+    const userObject = user.toObject ? user.toObject() : user;
+    delete userObject.password;
+    delete userObject.__v;
+    return userObject;
+  }
+
+  /**
+   * Get user by ID
+   * 
+   * @param {string} userId - User ID
+   * @returns {Promise<Object>} User object (without password)
+   * @throws {Error} If user not found
+   */
+  async getUserById(userId) {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return this.sanitizeUser(user);
+  }
+
+  /**
+   * Update user profile
+   * 
+   * @param {string} userId - User ID
+   * @param {Object} updates - Fields to update
+   * @returns {Promise<Object>} Updated user object
+   * @throws {Error} If user not found or update fails
+   */
+  async updateProfile(userId, updates) {
+    // Prevent updating sensitive fields
+    const allowedUpdates = ['name', 'email', 'avatar', 'preferences'];
+    const filteredUpdates = {};
+    
+    Object.keys(updates).forEach(key => {
+      if (allowedUpdates.includes(key)) {
+        filteredUpdates[key] = updates[key];
+      }
+    });
+
+    // If email is being updated, check if it's already in use
+    if (filteredUpdates.email) {
+      const existingUser = await User.findOne({ 
+        email: filteredUpdates.email.toLowerCase(),
+        _id: { $ne: userId }
+      });
+      if (existingUser) {
+        throw new Error('Email already in use');
+      }
+      filteredUpdates.email = filteredUpdates.email.toLowerCase();
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      filteredUpdates,
+      { new: true, runValidators: true }
+    );
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    return this.sanitizeUser(user);
+  }
 }
 
 module.exports = new AuthService();
