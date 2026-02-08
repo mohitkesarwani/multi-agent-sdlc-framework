@@ -1,0 +1,197 @@
+# ============================================
+# Multi-Agent SDLC Framework
+# Docker Compose Configuration
+# ============================================
+# This file defines all services needed for local development
+# and can be used for production with environment-specific overrides
+# ============================================
+
+version: '3.8'
+
+services:
+  # ==========================================
+  # MongoDB Database
+  # ==========================================
+  mongodb:
+    image: mongo:6.0
+    container_name: multi-agent-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-password}
+      MONGO_INITDB_DATABASE: ${MONGO_DB_NAME:-multi-agent-sdlc}
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    networks:
+      - multi-agent-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # ==========================================
+  # Backend API Service
+  # ==========================================
+  backend:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/Dockerfile.backend
+    container_name: multi-agent-backend
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${BACKEND_PORT:-5000}
+      MONGODB_URI: mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD:-password}@mongodb:27017/${MONGO_DB_NAME:-multi-agent-sdlc}?authSource=admin
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your-refresh-secret}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
+      BCRYPT_ROUNDS: ${BCRYPT_ROUNDS:-12}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "${BACKEND_PORT:-5000}:5000"
+    volumes:
+      # Mount source code for development (hot reload)
+      - ../../src/backend:/app:delegated
+      - /app/node_modules
+      # Persistent volumes
+      - backend_logs:/app/logs
+      - backend_uploads:/app/uploads
+    networks:
+      - multi-agent-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1); })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    # Development mode: use nodemon for hot reload
+    # command: npm run dev
+
+  # ==========================================
+  # Frontend Service
+  # ==========================================
+  frontend:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/Dockerfile.frontend
+    container_name: multi-agent-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:5000/api}
+      VITE_ENV: ${NODE_ENV:-development}
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    volumes:
+      # Mount source code for development (hot reload)
+      - ../../src/frontend:/app:delegated
+      - /app/node_modules
+      - /app/dist
+    networks:
+      - multi-agent-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    # Development mode: use vite dev server
+    # command: npm run dev -- --host
+
+  # ==========================================
+  # Optional: Redis for Caching
+  # ==========================================
+  # Uncomment to enable Redis caching
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: multi-agent-redis
+  #   restart: unless-stopped
+  #   ports:
+  #     - "${REDIS_PORT:-6379}:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   networks:
+  #     - multi-agent-network
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+
+  # ==========================================
+  # Optional: Nginx Reverse Proxy
+  # ==========================================
+  # Uncomment for production with nginx as reverse proxy
+  # nginx:
+  #   image: nginx:1.25-alpine
+  #   container_name: multi-agent-nginx
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - backend
+  #     - frontend
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ./nginx/ssl:/etc/nginx/ssl:ro
+  #   networks:
+  #     - multi-agent-network
+
+# ==========================================
+# Networks
+# ==========================================
+networks:
+  multi-agent-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# ==========================================
+# Volumes
+# ==========================================
+volumes:
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
+  backend_logs:
+    driver: local
+  backend_uploads:
+    driver: local
+  # redis_data:
+  #   driver: local
+
+# ============================================
+# Usage Instructions:
+# ============================================
+# Development:
+#   docker-compose -f infrastructure/docker/docker-compose.yml up
+#   docker-compose -f infrastructure/docker/docker-compose.yml up -d (detached)
+#
+# Production:
+#   docker-compose -f infrastructure/docker/docker-compose.yml -f infrastructure/docker/docker-compose.prod.yml up -d
+#
+# Stop:
+#   docker-compose -f infrastructure/docker/docker-compose.yml down
+#
+# Stop and remove volumes:
+#   docker-compose -f infrastructure/docker/docker-compose.yml down -v
+#
+# View logs:
+#   docker-compose -f infrastructure/docker/docker-compose.yml logs -f [service_name]
+#
+# Rebuild:
+#   docker-compose -f infrastructure/docker/docker-compose.yml up --build
+# ============================================
