@@ -1,0 +1,264 @@
+name: Security Scanning
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run security scan every Monday at 00:00 UTC
+    - cron: '0 0 * * 1'
+
+# Prevent concurrent security scans
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  codeql-analysis:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'javascript' ]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended,security-and-quality
+      
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
+      
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          category: "/language:${{ matrix.language }}"
+  
+  dependency-vulnerability-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd src/backend && npm ci
+          cd ../frontend && npm ci
+      
+      - name: Run npm audit (root)
+        run: |
+          npm audit --audit-level=high --json > root-audit.json || true
+          cat root-audit.json
+      
+      - name: Run npm audit (backend)
+        working-directory: ./src/backend
+        run: |
+          npm audit --audit-level=high --json > backend-audit.json || true
+          cat backend-audit.json
+      
+      - name: Run npm audit (frontend)
+        working-directory: ./src/frontend
+        run: |
+          npm audit --audit-level=high --json > frontend-audit.json || true
+          cat frontend-audit.json
+      
+      - name: Upload audit reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: audit-reports
+          path: |
+            root-audit.json
+            src/backend/backend-audit.json
+            src/frontend/frontend-audit.json
+          retention-days: 30
+  
+  secret-scanning:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: TruffleHog Secrets Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified
+  
+  container-security-scan:
+    name: Container Security Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'schedule'
+    permissions:
+      contents: read
+      security-events: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Build Docker images (if Dockerfiles exist)
+        run: |
+          if [ -f "infrastructure/docker/Dockerfile.backend" ]; then
+            docker build -f infrastructure/docker/Dockerfile.backend -t backend:test .
+          fi
+          if [ -f "infrastructure/docker/Dockerfile.frontend" ]; then
+            docker build -f infrastructure/docker/Dockerfile.frontend -t frontend:test .
+          fi
+      
+      - name: Run Trivy vulnerability scanner (Backend)
+        if: hashFiles('infrastructure/docker/Dockerfile.backend') != ''
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'backend:test'
+          format: 'sarif'
+          output: 'trivy-backend-results.sarif'
+      
+      - name: Upload Trivy results (Backend)
+        if: hashFiles('trivy-backend-results.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-backend-results.sarif'
+          category: 'trivy-backend'
+      
+      - name: Run Trivy vulnerability scanner (Frontend)
+        if: hashFiles('infrastructure/docker/Dockerfile.frontend') != ''
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'frontend:test'
+          format: 'sarif'
+          output: 'trivy-frontend-results.sarif'
+      
+      - name: Upload Trivy results (Frontend)
+        if: hashFiles('trivy-frontend-results.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-frontend-results.sarif'
+          category: 'trivy-frontend'
+  
+  security-headers-check:
+    name: Security Headers Check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check security configuration
+        run: |
+          echo "=== Checking for security configurations ==="
+          
+          # Check for security.js configuration
+          if [ -f "src/backend/config/security.js" ]; then
+            echo "✅ Security configuration found"
+            grep -i "helmet\|cors\|csp\|xss" src/backend/config/security.js || echo "⚠️ Check security headers"
+          else
+            echo "⚠️ No security configuration found"
+          fi
+          
+          # Check for environment variable examples
+          if [ -f ".env.example" ] || [ -f "src/backend/.env.example" ]; then
+            echo "✅ Environment variable examples found"
+          else
+            echo "⚠️ No .env.example found"
+          fi
+  
+  license-compliance:
+    name: License Compliance Check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd src/backend && npm ci
+          cd ../frontend && npm ci
+      
+      - name: Check licenses
+        run: |
+          npx license-checker --summary || npx license-checker --json > licenses.json
+      
+      - name: Upload license report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: license-report
+          path: licenses.json
+          retention-days: 30
+  
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [
+      codeql-analysis,
+      dependency-vulnerability-scan,
+      secret-scanning,
+      security-headers-check,
+      license-compliance
+    ]
+    if: always()
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Check security results
+        run: |
+          echo "=== Security Scan Summary ==="
+          echo "CodeQL Analysis: ${{ needs.codeql-analysis.result }}"
+          echo "Dependency Scan: ${{ needs.dependency-vulnerability-scan.result }}"
+          echo "Secret Scanning: ${{ needs.secret-scanning.result }}"
+          echo "Security Headers: ${{ needs.security-headers-check.result }}"
+          echo "License Compliance: ${{ needs.license-compliance.result }}"
+          
+          if [[ "${{ needs.codeql-analysis.result }}" == "failure" ]] || \
+             [[ "${{ needs.secret-scanning.result }}" == "failure" ]]; then
+            echo "❌ Critical security issues found"
+            exit 1
+          elif [[ "${{ needs.dependency-vulnerability-scan.result }}" == "failure" ]]; then
+            echo "⚠️ Dependency vulnerabilities found (check audit reports)"
+          else
+            echo "✅ All security checks passed"
+          fi

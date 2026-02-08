@@ -1,0 +1,406 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": "1.0.0",
+  "description": "Agent roles and responsibilities configuration for Multi-Agent SDLC Framework",
+  "agents": [
+    {
+      "agentId": "requirement-agent",
+      "name": "Requirement Agent",
+      "description": "Analyzes and clarifies project requirements, translates business needs into technical specifications, and ensures stakeholder alignment",
+      "responsibilities": [
+        "Gather and analyze business requirements from stakeholders",
+        "Translate business requirements into technical specifications",
+        "Create user stories and acceptance criteria",
+        "Identify functional and non-functional requirements",
+        "Validate requirements for completeness and consistency",
+        "Maintain requirements traceability matrix",
+        "Facilitate requirement reviews and approvals"
+      ],
+      "capabilities": [
+        "natural_language_processing",
+        "requirements_analysis",
+        "stakeholder_communication",
+        "documentation_generation",
+        "validation_logic"
+      ],
+      "inputSpecifications": {
+        "acceptedFormats": ["text", "document", "structured_data", "user_story"],
+        "requiredFields": [
+          "requirement_description",
+          "stakeholder_info",
+          "priority_level"
+        ],
+        "optionalFields": [
+          "acceptance_criteria",
+          "constraints",
+          "dependencies",
+          "mockups"
+        ]
+      },
+      "outputSpecifications": {
+        "formats": ["structured_requirements", "user_stories", "technical_specs"],
+        "deliverables": [
+          "requirements_document",
+          "user_story_backlog",
+          "acceptance_criteria",
+          "requirements_traceability_matrix"
+        ],
+        "metadata": [
+          "requirement_id",
+          "priority",
+          "complexity_score",
+          "estimated_effort"
+        ]
+      },
+      "dependencies": {
+        "upstream": [],
+        "downstream": ["system-architect", "implementation-planner"],
+        "collaborates_with": ["quality-assurance", "fullstack-dev-swarm"]
+      },
+      "performance_metrics": {
+        "response_time_target_ms": 5000,
+        "accuracy_threshold": 0.95,
+        "completeness_score_min": 0.90
+      }
+    },
+    {
+      "agentId": "system-architect",
+      "name": "System Architect",
+      "description": "Designs system architecture, defines technical stack, establishes design patterns, and ensures scalability and maintainability",
+      "responsibilities": [
+        "Design overall system architecture and component relationships",
+        "Select appropriate technology stack and frameworks",
+        "Define architectural patterns and best practices",
+        "Create high-level and low-level design documents",
+        "Ensure system scalability, performance, and maintainability",
+        "Review and approve architectural decisions",
+        "Identify and mitigate architectural risks"
+      ],
+      "capabilities": [
+        "architecture_design",
+        "technology_evaluation",
+        "pattern_recognition",
+        "scalability_analysis",
+        "documentation_generation",
+        "diagram_creation"
+      ],
+      "inputSpecifications": {
+        "acceptedFormats": ["requirements_document", "technical_specs", "constraints"],
+        "requiredFields": [
+          "functional_requirements",
+          "non_functional_requirements",
+          "constraints",
+          "scale_requirements"
+        ],
+        "optionalFields": [
+          "existing_architecture",
+          "technology_preferences",
+          "budget_constraints"
+        ]
+      },
+      "outputSpecifications": {
+        "formats": ["architecture_document", "design_diagrams", "technology_stack"],
+        "deliverables": [
+          "system_architecture_diagram",
+          "component_design",
+          "data_model",
+          "api_specifications",
+          "technology_stack_document",
+          "deployment_architecture"
+        ],
+        "metadata": [
+          "architecture_style",
+          "scalability_tier",
+          "security_level",
+          "estimated_complexity"
+        ]
+      },
+      "dependencies": {
+        "upstream": ["requirement-agent"],
+        "downstream": ["implementation-planner", "fullstack-dev-swarm"],
+        "collaborates_with": ["security-sentinel", "quality-assurance"]
+      },
+      "performance_metrics": {
+        "response_time_target_ms": 10000,
+        "design_quality_score_min": 0.90,
+        "scalability_score_min": 0.85
+      }
+    },
+    {
+      "agentId": "implementation-planner",
+      "name": "Implementation Planner",
+      "description": "Creates detailed implementation plans, breaks down work into tasks, estimates effort, and coordinates development activities",
+      "responsibilities": [
+        "Break down architecture into implementable tasks",
+        "Create detailed implementation roadmap",
+        "Estimate effort and resources for each task",
+        "Identify task dependencies and critical path",
+        "Prioritize tasks based on business value and dependencies",
+        "Define implementation milestones and deliverables",
+        "Monitor and adjust implementation plans"
+      ],
+      "capabilities": [
+        "task_decomposition",
+        "effort_estimation",
+        "dependency_management",
+        "project_planning",
+        "risk_assessment",
+        "resource_allocation"
+      ],
+      "inputSpecifications": {
+        "acceptedFormats": ["architecture_document", "design_specs", "requirements"],
+        "requiredFields": [
+          "architecture_design",
+          "requirements_list",
+          "team_capacity",
+          "timeline_constraints"
+        ],
+        "optionalFields": [
+          "existing_codebase",
+          "technical_debt",
+          "resource_constraints"
+        ]
+      },
+      "outputSpecifications": {
+        "formats": ["implementation_plan", "task_breakdown", "timeline"],
+        "deliverables": [
+          "task_breakdown_structure",
+          "implementation_timeline",
+          "resource_allocation_plan",
+          "dependency_graph",
+          "milestone_definitions",
+          "risk_mitigation_plan"
+        ],
+        "metadata": [
+          "total_estimated_effort",
+          "critical_path",
+          "complexity_distribution",
+          "risk_level"
+        ]
+      },
+      "dependencies": {
+        "upstream": ["system-architect", "requirement-agent"],
+        "downstream": ["fullstack-dev-swarm"],
+        "collaborates_with": ["quality-assurance", "security-sentinel"]
+      },
+      "performance_metrics": {
+        "response_time_target_ms": 8000,
+        "estimation_accuracy_min": 0.80,
+        "plan_completeness_min": 0.95
+      }
+    },
+    {
+      "agentId": "fullstack-dev-swarm",
+      "name": "FullStack Dev Swarm",
+      "description": "Implements features across the full stack, writes clean and maintainable code, conducts peer reviews, and ensures coding standards",
+      "responsibilities": [
+        "Implement frontend, backend, and database components",
+        "Write clean, maintainable, and well-documented code",
+        "Follow coding standards and best practices",
+        "Conduct peer code reviews",
+        "Write unit tests and integration tests",
+        "Debug and fix implementation issues",
+        "Optimize code for performance and efficiency",
+        "Collaborate with other agents for clarifications"
+      ],
+      "capabilities": [
+        "frontend_development",
+        "backend_development",
+        "database_design",
+        "api_development",
+        "testing",
+        "code_review",
+        "debugging",
+        "version_control"
+      ],
+      "inputSpecifications": {
+        "acceptedFormats": ["task_specification", "design_document", "code_template"],
+        "requiredFields": [
+          "task_description",
+          "acceptance_criteria",
+          "technical_specifications",
+          "dependencies"
+        ],
+        "optionalFields": [
+          "code_examples",
+          "design_mockups",
+          "api_contracts",
+          "database_schema"
+        ]
+      },
+      "outputSpecifications": {
+        "formats": ["source_code", "test_code", "documentation"],
+        "deliverables": [
+          "implemented_features",
+          "unit_tests",
+          "integration_tests",
+          "code_documentation",
+          "commit_history",
+          "pull_requests"
+        ],
+        "metadata": [
+          "code_coverage",
+          "complexity_metrics",
+          "performance_metrics",
+          "lines_of_code"
+        ]
+      },
+      "dependencies": {
+        "upstream": ["implementation-planner", "system-architect"],
+        "downstream": ["quality-assurance", "security-sentinel"],
+        "collaborates_with": ["requirement-agent"]
+      },
+      "performance_metrics": {
+        "response_time_target_ms": 15000,
+        "code_quality_score_min": 0.85,
+        "test_coverage_min": 0.80,
+        "bug_density_max": 0.05
+      }
+    },
+    {
+      "agentId": "quality-assurance",
+      "name": "Quality Assurance",
+      "description": "Ensures software quality through comprehensive testing, validates requirements fulfillment, and verifies system reliability",
+      "responsibilities": [
+        "Create comprehensive test plans and test cases",
+        "Execute functional and non-functional testing",
+        "Perform regression testing on changes",
+        "Validate requirements and acceptance criteria",
+        "Report and track defects",
+        "Verify bug fixes and enhancements",
+        "Conduct performance and load testing",
+        "Ensure test coverage and quality metrics"
+      ],
+      "capabilities": [
+        "test_planning",
+        "test_execution",
+        "automated_testing",
+        "performance_testing",
+        "regression_testing",
+        "defect_tracking",
+        "quality_metrics",
+        "test_reporting"
+      ],
+      "inputSpecifications": {
+        "acceptedFormats": ["requirements", "implemented_code", "test_scenarios"],
+        "requiredFields": [
+          "requirements_to_test",
+          "acceptance_criteria",
+          "implementation_artifacts",
+          "test_environment_spec"
+        ],
+        "optionalFields": [
+          "existing_test_cases",
+          "known_issues",
+          "performance_benchmarks"
+        ]
+      },
+      "outputSpecifications": {
+        "formats": ["test_report", "defect_report", "quality_metrics"],
+        "deliverables": [
+          "test_plan",
+          "test_cases",
+          "test_execution_results",
+          "defect_report",
+          "quality_metrics_report",
+          "test_coverage_report",
+          "regression_test_results"
+        ],
+        "metadata": [
+          "total_tests_executed",
+          "pass_rate",
+          "defect_count",
+          "severity_distribution",
+          "test_coverage_percentage"
+        ]
+      },
+      "dependencies": {
+        "upstream": ["fullstack-dev-swarm", "requirement-agent"],
+        "downstream": [],
+        "collaborates_with": ["security-sentinel", "system-architect"]
+      },
+      "performance_metrics": {
+        "response_time_target_ms": 12000,
+        "test_coverage_min": 0.85,
+        "defect_detection_rate_min": 0.90,
+        "false_positive_rate_max": 0.10
+      }
+    },
+    {
+      "agentId": "security-sentinel",
+      "name": "Security Sentinel",
+      "description": "Identifies security vulnerabilities, enforces security best practices, conducts security audits, and ensures compliance with security standards",
+      "responsibilities": [
+        "Conduct security code reviews and audits",
+        "Identify security vulnerabilities and risks",
+        "Recommend security best practices and fixes",
+        "Verify security compliance with standards",
+        "Perform penetration testing and threat modeling",
+        "Monitor for security dependencies and CVEs",
+        "Validate security controls implementation",
+        "Maintain security documentation and reports"
+      ],
+      "capabilities": [
+        "security_analysis",
+        "vulnerability_scanning",
+        "threat_modeling",
+        "penetration_testing",
+        "compliance_checking",
+        "security_code_review",
+        "encryption_validation",
+        "authentication_authorization_review"
+      ],
+      "inputSpecifications": {
+        "acceptedFormats": ["source_code", "architecture_design", "configuration"],
+        "requiredFields": [
+          "code_to_review",
+          "architecture_document",
+          "security_requirements",
+          "compliance_standards"
+        ],
+        "optionalFields": [
+          "existing_vulnerabilities",
+          "security_policies",
+          "threat_model",
+          "audit_history"
+        ]
+      },
+      "outputSpecifications": {
+        "formats": ["security_report", "vulnerability_report", "compliance_report"],
+        "deliverables": [
+          "security_audit_report",
+          "vulnerability_assessment",
+          "threat_model",
+          "security_recommendations",
+          "compliance_checklist",
+          "penetration_test_results",
+          "security_metrics"
+        ],
+        "metadata": [
+          "vulnerabilities_found",
+          "severity_distribution",
+          "compliance_score",
+          "risk_level",
+          "remediation_priority"
+        ]
+      },
+      "dependencies": {
+        "upstream": ["fullstack-dev-swarm", "system-architect"],
+        "downstream": [],
+        "collaborates_with": ["quality-assurance", "implementation-planner"]
+      },
+      "performance_metrics": {
+        "response_time_target_ms": 10000,
+        "vulnerability_detection_rate_min": 0.95,
+        "false_positive_rate_max": 0.15,
+        "compliance_score_min": 0.90
+      }
+    }
+  ],
+  "agent_communication_protocol": {
+    "message_format": "json",
+    "required_fields": ["sender_id", "receiver_id", "message_type", "payload", "timestamp"],
+    "message_types": ["request", "response", "notification", "error"],
+    "timeout_ms": 30000
+  }
+}

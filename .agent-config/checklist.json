@@ -1,0 +1,844 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": "1.0.0",
+  "description": "Quality and compliance checklists for Multi-Agent SDLC Framework",
+  "checklist_categories": [
+    {
+      "categoryId": "code-quality",
+      "name": "Code Quality",
+      "description": "Standards and best practices for code quality",
+      "items": [
+        {
+          "id": "CQ-001",
+          "category": "code-quality",
+          "description": "Code follows established coding standards and style guide",
+          "priority": "high",
+          "validation_criteria": {
+            "method": "automated_linting",
+            "tools": ["eslint", "prettier", "pylint"],
+            "pass_threshold": "zero_violations"
+          },
+          "applicable_phases": ["implementation", "code_review"],
+          "automated": true
+        },
+        {
+          "id": "CQ-002",
+          "category": "code-quality",
+          "description": "Code complexity is within acceptable limits (cyclomatic complexity < 10)",
+          "priority": "high",
+          "validation_criteria": {
+            "method": "static_analysis",
+            "tools": ["sonarqube", "code_climate"],
+            "pass_threshold": "complexity_score_below_10"
+          },
+          "applicable_phases": ["implementation", "code_review"],
+          "automated": true
+        },
+        {
+          "id": "CQ-003",
+          "category": "code-quality",
+          "description": "No code duplication exceeding 5% threshold",
+          "priority": "medium",
+          "validation_criteria": {
+            "method": "duplication_analysis",
+            "tools": ["jscpd", "sonarqube"],
+            "pass_threshold": "duplication_below_5_percent"
+          },
+          "applicable_phases": ["implementation", "code_review"],
+          "automated": true
+        },
+        {
+          "id": "CQ-004",
+          "category": "code-quality",
+          "description": "All functions and methods have clear, descriptive names",
+          "priority": "medium",
+          "validation_criteria": {
+            "method": "manual_review",
+            "checklist": ["names_are_descriptive", "naming_conventions_followed", "no_abbreviations_without_context"],
+            "pass_threshold": "reviewer_approval"
+          },
+          "applicable_phases": ["code_review"],
+          "automated": false
+        },
+        {
+          "id": "CQ-005",
+          "category": "code-quality",
+          "description": "Code is modular with single responsibility principle applied",
+          "priority": "high",
+          "validation_criteria": {
+            "method": "manual_review",
+            "checklist": ["functions_have_single_purpose", "classes_are_cohesive", "separation_of_concerns_maintained"],
+            "pass_threshold": "reviewer_approval"
+          },
+          "applicable_phases": ["implementation", "code_review"],
+          "automated": false
+        },
+        {
+          "id": "CQ-006",
+          "category": "code-quality",
+          "description": "Error handling is comprehensive and appropriate",
+          "priority": "high",
+          "validation_criteria": {
+            "method": "manual_review",
+            "checklist": ["errors_caught_appropriately", "error_messages_meaningful", "no_silent_failures", "cleanup_in_finally_blocks"],
+            "pass_threshold": "reviewer_approval"
+          },
+          "applicable_phases": ["implementation", "code_review"],
+          "automated": false
+        },
+        {
+          "id": "CQ-007",
+          "category": "code-quality",
+          "description": "Code comments are present for complex logic only, code is self-documenting",
+          "priority": "medium",
+          "validation_criteria": {
+            "method": "manual_review",
+            "checklist": ["complex_logic_explained", "no_redundant_comments", "comments_accurate_and_current"],
+            "pass_threshold": "reviewer_approval"
+          },
+          "applicable_phases": ["code_review"],
+          "automated": false
+        },
+        {
+          "id": "CQ-008",
+          "category": "code-quality",
+          "description": "No hardcoded values, use configuration or constants",
+          "priority": "high",
+          "validation_criteria": {
+            "method": "code_inspection",
+            "checklist": ["magic_numbers_eliminated", "strings_externalized", "configuration_used_appropriately"],
+            "pass_threshold": "zero_hardcoded_values"
+          },
+          "applicable_phases": ["implementation", "code_review"],
+          "automated": true
+        },
+        {
+          "id": "CQ-009",
+          "category": "code-quality",
+          "description": "Dead code and unused imports removed",
+          "priority": "medium",
+          "validation_criteria": {
+            "method": "static_analysis",
+            "tools": ["eslint", "unused-code-detector"],
+            "pass_threshold": "zero_unused_code"
+          },
+          "applicable_phases": ["implementation", "code_review"],
+          "automated": true
+        },
+        {
+          "id": "CQ-010",
+          "category": "code-quality",
+          "description": "Code is optimized for readability and maintainability over cleverness",
+          "priority": "high",
+          "validation_criteria": {
+            "method": "manual_review",
+            "checklist": ["code_is_clear", "no_obscure_tricks", "maintainability_considered"],
+            "pass_threshold": "reviewer_approval"
+          },
+          "applicable_phases": ["code_review"],
+          "automated": false
+        }
+      ]
+    },
+    {
+      "categoryId": "security",
+      "name": "Security",
+      "description": "Security requirements and vulnerability prevention",
+      "items": [
+        {
+          "id": "SEC-001",
+          "category": "security",
+          "description": "No hardcoded credentials, API keys, or sensitive data in code",
+          "priority": "critical",
+          "validation_criteria": {
+            "method": "secrets_scanning",
+            "tools": ["git-secrets", "truffleHog", "detect-secrets"],
+            "pass_threshold": "zero_secrets_found"
+          },
+          "applicable_phases": ["implementation", "code_review", "pre_commit"],
+          "automated": true,
+          "blocking": true
+        },
+        {
+          "id": "SEC-002",
+          "category": "security",
+          "description": "All user inputs are validated and sanitized",
+          "priority": "critical",
+          "validation_criteria": {
+            "method": "code_review_and_testing",
+            "checklist": ["input_validation_present", "sanitization_applied", "type_checking_enforced", "length_limits_applied"],
+            "pass_threshold": "all_inputs_protected"
+          },
+          "applicable_phases": ["implementation", "code_review", "security_testing"],
+          "automated": false,
+          "blocking": true
+        },
+        {
+          "id": "SEC-003",
+          "category": "security",
+          "description": "SQL injection prevention measures in place",
+          "priority": "critical",
+          "validation_criteria": {
+            "method": "code_review_and_sast",
+            "checklist": ["parameterized_queries_used", "orm_used_correctly", "no_dynamic_sql_concatenation"],
+            "tools": ["sqlmap", "bandit", "sonarqube"],
+            "pass_threshold": "zero_sql_injection_vectors"
+          },
+          "applicable_phases": ["implementation", "security_testing"],
+          "automated": true,
+          "blocking": true
+        },
+        {
+          "id": "SEC-004",
+          "category": "security",
+          "description": "Cross-Site Scripting (XSS) prevention implemented",
+          "priority": "critical",
+          "validation_criteria": {
+            "method": "code_review_and_dast",
+            "checklist": ["output_encoding_applied", "csp_headers_configured", "template_escaping_enabled"],
+            "tools": ["OWASP ZAP", "burp_suite"],
+            "pass_threshold": "zero_xss_vulnerabilities"
+          },
+          "applicable_phases": ["implementation", "security_testing"],
+          "automated": true,
+          "blocking": true
+        },
+        {
+          "id": "SEC-005",
+          "category": "security",
+          "description": "Authentication and authorization properly implemented",
+          "priority": "critical",
+          "validation_criteria": {
+            "method": "security_review",
+            "checklist": ["strong_password_policy", "multi_factor_auth_available", "session_management_secure", "authorization_checks_present", "principle_of_least_privilege"],
+            "pass_threshold": "all_access_protected"
+          },
+          "applicable_phases": ["implementation", "security_testing"],
+          "automated": false,
+          "blocking": true
+        },
+        {
+          "id": "SEC-006",
+          "category": "security",
+          "description": "Sensitive data encrypted at rest and in transit",
+          "priority": "critical",
+          "validation_criteria": {
+            "method": "security_review",
+            "checklist": ["tls_https_enforced", "database_encryption_enabled", "encryption_algorithms_current", "key_management_secure"],
+            "pass_threshold": "all_sensitive_data_encrypted"
+          },
+          "applicable_phases": ["implementation", "security_testing"],
+          "automated": true,
+          "blocking": true
+        },
+        {
+          "id": "SEC-007",
+          "category": "security",
+          "description": "No known vulnerable dependencies",
+          "priority": "high",
+          "validation_criteria": {
+            "method": "dependency_scanning",
+            "tools": ["npm_audit", "snyk", "dependabot", "OWASP_dependency_check"],
+            "pass_threshold": "zero_high_severity_vulnerabilities"
+          },
+          "applicable_phases": ["implementation", "continuous_monitoring"],
+          "automated": true,
+          "blocking": true
+        },
+        {
+          "id": "SEC-008",
+          "category": "security",
+          "description": "CSRF protection implemented for state-changing operations",
+          "priority": "high",
+          "validation_criteria": {
+            "method": "security_review",
+            "checklist": ["csrf_tokens_used", "same_site_cookies_configured", "state_changing_ops_protected"],
+            "pass_threshold": "all_mutations_protected"
+          },
+          "applicable_phases": ["implementation", "security_testing"],
+          "automated": false
+        },
+        {
+          "id": "SEC-009",
+          "category": "security",
+          "description": "Security headers properly configured",
+          "priority": "high",
+          "validation_criteria": {
+            "method": "automated_scanning",
+            "checklist": ["content_security_policy", "x_frame_options", "strict_transport_security", "x_content_type_options"],
+            "tools": ["securityheaders.com", "observatory"],
+            "pass_threshold": "all_critical_headers_present"
+          },
+          "applicable_phases": ["deployment", "security_testing"],
+          "automated": true
+        },
+        {
+          "id": "SEC-010",
+          "category": "security",
+          "description": "Logging does not expose sensitive information",
+          "priority": "high",
+          "validation_criteria": {
+            "method": "log_review",
+            "checklist": ["no_passwords_logged", "no_pii_in_logs", "sensitive_data_masked", "log_injection_prevented"],
+            "pass_threshold": "logs_sanitized"
+          },
+          "applicable_phases": ["implementation", "code_review"],
+          "automated": false
+        },
+        {
+          "id": "SEC-011",
+          "category": "security",
+          "description": "Rate limiting implemented for APIs and authentication endpoints",
+          "priority": "medium",
+          "validation_criteria": {
+            "method": "security_review",
+            "checklist": ["rate_limits_configured", "ddos_protection_enabled", "brute_force_protection"],
+            "pass_threshold": "rate_limiting_active"
+          },
+          "applicable_phases": ["implementation", "security_testing"],
+          "automated": true
+        },
+        {
+          "id": "SEC-012",
+          "category": "security",
+          "description": "Security incident response plan documented and accessible",
+          "priority": "medium",
+          "validation_criteria": {
+            "method": "documentation_review",
+            "checklist": ["incident_plan_exists", "contact_info_current", "escalation_procedures_defined"],
+            "pass_threshold": "plan_documented"
+          },
+          "applicable_phases": ["planning", "deployment"],
+          "automated": false
+        }
+      ]
+    },
+    {
+      "categoryId": "testing",
+      "name": "Testing",
+      "description": "Testing requirements and quality assurance",
+      "items": [
+        {
+          "id": "TEST-001",
+          "category": "testing",
+          "description": "Unit tests written for all business logic with minimum 80% code coverage",
+          "priority": "critical",
+          "validation_criteria": {
+            "method": "coverage_analysis",
+            "tools": ["jest", "pytest", "coverage.py", "jacoco"],
+            "pass_threshold": "coverage_above_80_percent"
+          },
+          "applicable_phases": ["implementation", "code_review"],
+          "automated": true,
+          "blocking": true
+        },
+        {
+          "id": "TEST-002",
+          "category": "testing",
+          "description": "All unit tests pass successfully",
+          "priority": "critical",
+          "validation_criteria": {
+            "method": "test_execution",
+            "tools": ["test_runner"],
+            "pass_threshold": "all_tests_pass"
+          },
+          "applicable_phases": ["implementation", "pre_commit", "ci_cd"],
+          "automated": true,
+          "blocking": true
+        },
+        {
+          "id": "TEST-003",
+          "category": "testing",
+          "description": "Integration tests cover critical user workflows",
+          "priority": "high",
+          "validation_criteria": {
+            "method": "test_review",
+            "checklist": ["main_workflows_covered", "api_integrations_tested", "database_interactions_tested"],
+            "pass_threshold": "critical_paths_covered"
+          },
+          "applicable_phases": ["implementation", "qa_testing"],
+          "automated": true,
+          "blocking": true
+        },
+        {
+          "id": "TEST-004",
+          "category": "testing",
+          "description": "Edge cases and boundary conditions tested",
+          "priority": "high",
+          "validation_criteria": {
+            "method": "test_review",
+            "checklist": ["null_empty_tested", "boundary_values_tested", "error_conditions_tested", "concurrent_access_tested"],
+            "pass_threshold": "edge_cases_covered"
+          },
+          "applicable_phases": ["implementation", "qa_testing"],
+          "automated": false
+        },
+        {
+          "id": "TEST-005",
+          "category": "testing",
+          "description": "Performance tests demonstrate acceptable response times",
+          "priority": "high",
+          "validation_criteria": {
+            "method": "performance_testing",
+            "tools": ["jmeter", "k6", "gatling"],
+            "pass_threshold": "response_time_under_threshold"
+          },
+          "applicable_phases": ["qa_testing", "pre_deployment"],
+          "automated": true
+        },
+        {
+          "id": "TEST-006",
+          "category": "testing",
+          "description": "Load tests verify system handles expected concurrent users",
+          "priority": "medium",
+          "validation_criteria": {
+            "method": "load_testing",
+            "tools": ["jmeter", "k6", "locust"],
+            "pass_threshold": "handles_expected_load"
+          },
+          "applicable_phases": ["qa_testing", "pre_deployment"],
+          "automated": true
+        },
+        {
+          "id": "TEST-007",
+          "category": "testing",
+          "description": "Regression tests pass for existing functionality",
+          "priority": "critical",
+          "validation_criteria": {
+            "method": "regression_testing",
+            "tools": ["automated_test_suite"],
+            "pass_threshold": "all_regression_tests_pass"
+          },
+          "applicable_phases": ["qa_testing", "pre_deployment"],
+          "automated": true,
+          "blocking": true
+        },
+        {
+          "id": "TEST-008",
+          "category": "testing",
+          "description": "Acceptance criteria validated for all requirements",
+          "priority": "critical",
+          "validation_criteria": {
+            "method": "acceptance_testing",
+            "checklist": ["all_criteria_met", "stakeholder_approval", "user_scenarios_validated"],
+            "pass_threshold": "acceptance_approved"
+          },
+          "applicable_phases": ["qa_testing"],
+          "automated": false,
+          "blocking": true
+        },
+        {
+          "id": "TEST-009",
+          "category": "testing",
+          "description": "End-to-end tests cover complete user journeys",
+          "priority": "high",
+          "validation_criteria": {
+            "method": "e2e_testing",
+            "tools": ["cypress", "selenium", "playwright"],
+            "pass_threshold": "critical_journeys_pass"
+          },
+          "applicable_phases": ["qa_testing", "pre_deployment"],
+          "automated": true
+        },
+        {
+          "id": "TEST-010",
+          "category": "testing",
+          "description": "All identified bugs from testing are resolved or documented",
+          "priority": "high",
+          "validation_criteria": {
+            "method": "defect_tracking",
+            "checklist": ["critical_bugs_fixed", "high_bugs_triaged", "known_issues_documented"],
+            "pass_threshold": "no_unresolved_critical_bugs"
+          },
+          "applicable_phases": ["qa_testing", "pre_deployment"],
+          "automated": false,
+          "blocking": true
+        },
+        {
+          "id": "TEST-011",
+          "category": "testing",
+          "description": "Test data is realistic and covers diverse scenarios",
+          "priority": "medium",
+          "validation_criteria": {
+            "method": "test_data_review",
+            "checklist": ["data_variety_adequate", "production_like_data", "privacy_preserved"],
+            "pass_threshold": "data_quality_sufficient"
+          },
+          "applicable_phases": ["implementation", "qa_testing"],
+          "automated": false
+        },
+        {
+          "id": "TEST-012",
+          "category": "testing",
+          "description": "Tests are maintainable, readable, and follow AAA pattern",
+          "priority": "medium",
+          "validation_criteria": {
+            "method": "test_code_review",
+            "checklist": ["arrange_act_assert_used", "test_names_descriptive", "no_test_interdependencies"],
+            "pass_threshold": "test_quality_acceptable"
+          },
+          "applicable_phases": ["code_review"],
+          "automated": false
+        }
+      ]
+    },
+    {
+      "categoryId": "documentation",
+      "name": "Documentation",
+      "description": "Documentation standards and completeness",
+      "items": [
+        {
+          "id": "DOC-001",
+          "category": "documentation",
+          "description": "README file is complete with setup instructions",
+          "priority": "high",
+          "validation_criteria": {
+            "method": "documentation_review",
+            "checklist": ["prerequisites_listed", "installation_steps_clear", "configuration_explained", "usage_examples_provided"],
+            "pass_threshold": "readme_complete"
+          },
+          "applicable_phases": ["implementation", "deployment"],
+          "automated": false
+        },
+        {
+          "id": "DOC-002",
+          "category": "documentation",
+          "description": "API documentation is complete and accurate",
+          "priority": "high",
+          "validation_criteria": {
+            "method": "api_doc_review",
+            "checklist": ["all_endpoints_documented", "parameters_explained", "responses_documented", "examples_provided", "authentication_described"],
+            "tools": ["swagger", "openapi"],
+            "pass_threshold": "api_docs_complete"
+          },
+          "applicable_phases": ["implementation", "deployment"],
+          "automated": true
+        },
+        {
+          "id": "DOC-003",
+          "category": "documentation",
+          "description": "Architecture documentation reflects current design",
+          "priority": "high",
+          "validation_criteria": {
+            "method": "documentation_review",
+            "checklist": ["architecture_diagrams_current", "component_interactions_documented", "technology_stack_documented", "design_decisions_explained"],
+            "pass_threshold": "architecture_docs_current"
+          },
+          "applicable_phases": ["design", "implementation"],
+          "automated": false
+        },
+        {
+          "id": "DOC-004",
+          "category": "documentation",
+          "description": "Inline code documentation for public APIs and complex logic",
+          "priority": "medium",
+          "validation_criteria": {
+            "method": "code_review",
+            "checklist": ["public_methods_documented", "parameters_described", "return_values_described", "exceptions_documented"],
+            "tools": ["jsdoc", "sphinx", "javadoc"],
+            "pass_threshold": "public_apis_documented"
+          },
+          "applicable_phases": ["implementation", "code_review"],
+          "automated": true
+        },
+        {
+          "id": "DOC-005",
+          "category": "documentation",
+          "description": "Change log or release notes maintained",
+          "priority": "medium",
+          "validation_criteria": {
+            "method": "documentation_review",
+            "checklist": ["changes_documented", "version_numbers_tracked", "breaking_changes_highlighted"],
+            "pass_threshold": "changelog_current"
+          },
+          "applicable_phases": ["deployment"],
+          "automated": false
+        },
+        {
+          "id": "DOC-006",
+          "category": "documentation",
+          "description": "Environment configuration documented",
+          "priority": "high",
+          "validation_criteria": {
+            "method": "documentation_review",
+            "checklist": ["env_variables_documented", "config_files_explained", "secrets_management_documented"],
+            "pass_threshold": "config_documented"
+          },
+          "applicable_phases": ["implementation", "deployment"],
+          "automated": false
+        },
+        {
+          "id": "DOC-007",
+          "category": "documentation",
+          "description": "Deployment procedures documented",
+          "priority": "high",
+          "validation_criteria": {
+            "method": "documentation_review",
+            "checklist": ["deployment_steps_clear", "rollback_procedure_documented", "monitoring_setup_explained"],
+            "pass_threshold": "deployment_docs_complete"
+          },
+          "applicable_phases": ["deployment"],
+          "automated": false
+        },
+        {
+          "id": "DOC-008",
+          "category": "documentation",
+          "description": "User documentation or help content available",
+          "priority": "medium",
+          "validation_criteria": {
+            "method": "documentation_review",
+            "checklist": ["user_guides_available", "common_tasks_explained", "troubleshooting_guide_present"],
+            "pass_threshold": "user_docs_adequate"
+          },
+          "applicable_phases": ["implementation", "deployment"],
+          "automated": false
+        },
+        {
+          "id": "DOC-009",
+          "category": "documentation",
+          "description": "Database schema and migrations documented",
+          "priority": "medium",
+          "validation_criteria": {
+            "method": "documentation_review",
+            "checklist": ["schema_diagrams_available", "migrations_tracked", "data_relationships_explained"],
+            "pass_threshold": "database_docs_complete"
+          },
+          "applicable_phases": ["design", "implementation"],
+          "automated": false
+        },
+        {
+          "id": "DOC-010",
+          "category": "documentation",
+          "description": "Known issues and limitations documented",
+          "priority": "medium",
+          "validation_criteria": {
+            "method": "documentation_review",
+            "checklist": ["known_bugs_listed", "limitations_described", "workarounds_provided"],
+            "pass_threshold": "issues_documented"
+          },
+          "applicable_phases": ["qa_testing", "deployment"],
+          "automated": false
+        }
+      ]
+    },
+    {
+      "categoryId": "deployment",
+      "name": "Deployment",
+      "description": "Deployment readiness and operational requirements",
+      "items": [
+        {
+          "id": "DEP-001",
+          "category": "deployment",
+          "description": "Build process is automated and reproducible",
+          "priority": "critical",
+          "validation_criteria": {
+            "method": "build_verification",
+            "checklist": ["ci_cd_configured", "build_scripts_present", "dependencies_locked", "build_succeeds"],
+            "pass_threshold": "automated_build_passes"
+          },
+          "applicable_phases": ["implementation", "pre_deployment"],
+          "automated": true,
+          "blocking": true
+        },
+        {
+          "id": "DEP-002",
+          "category": "deployment",
+          "description": "All tests pass in CI/CD pipeline",
+          "priority": "critical",
+          "validation_criteria": {
+            "method": "pipeline_verification",
+            "tools": ["jenkins", "github_actions", "gitlab_ci"],
+            "pass_threshold": "pipeline_green"
+          },
+          "applicable_phases": ["pre_deployment"],
+          "automated": true,
+          "blocking": true
+        },
+        {
+          "id": "DEP-003",
+          "category": "deployment",
+          "description": "Environment variables and secrets properly configured",
+          "priority": "critical",
+          "validation_criteria": {
+            "method": "configuration_review",
+            "checklist": ["secrets_in_vault", "env_specific_configs", "no_hardcoded_credentials"],
+            "pass_threshold": "config_secure"
+          },
+          "applicable_phases": ["pre_deployment"],
+          "automated": false,
+          "blocking": true
+        },
+        {
+          "id": "DEP-004",
+          "category": "deployment",
+          "description": "Database migrations tested and ready",
+          "priority": "critical",
+          "validation_criteria": {
+            "method": "migration_testing",
+            "checklist": ["migrations_tested", "rollback_tested", "data_integrity_verified"],
+            "pass_threshold": "migrations_safe"
+          },
+          "applicable_phases": ["pre_deployment"],
+          "automated": true,
+          "blocking": true
+        },
+        {
+          "id": "DEP-005",
+          "category": "deployment",
+          "description": "Health check endpoints implemented and tested",
+          "priority": "high",
+          "validation_criteria": {
+            "method": "endpoint_testing",
+            "checklist": ["health_endpoint_exists", "readiness_check_implemented", "liveness_check_implemented"],
+            "pass_threshold": "health_checks_working"
+          },
+          "applicable_phases": ["implementation", "pre_deployment"],
+          "automated": true
+        },
+        {
+          "id": "DEP-006",
+          "category": "deployment",
+          "description": "Monitoring and logging configured",
+          "priority": "high",
+          "validation_criteria": {
+            "method": "monitoring_verification",
+            "checklist": ["logging_configured", "metrics_collection_enabled", "alerts_configured", "dashboards_created"],
+            "tools": ["prometheus", "grafana", "elk_stack"],
+            "pass_threshold": "monitoring_active"
+          },
+          "applicable_phases": ["deployment"],
+          "automated": true
+        },
+        {
+          "id": "DEP-007",
+          "category": "deployment",
+          "description": "Rollback procedure tested and documented",
+          "priority": "critical",
+          "validation_criteria": {
+            "method": "rollback_testing",
+            "checklist": ["rollback_procedure_exists", "rollback_tested", "data_rollback_strategy"],
+            "pass_threshold": "rollback_verified"
+          },
+          "applicable_phases": ["pre_deployment"],
+          "automated": false,
+          "blocking": true
+        },
+        {
+          "id": "DEP-008",
+          "category": "deployment",
+          "description": "Performance baselines established",
+          "priority": "medium",
+          "validation_criteria": {
+            "method": "performance_measurement",
+            "checklist": ["baseline_metrics_recorded", "sla_targets_defined", "performance_monitoring_active"],
+            "pass_threshold": "baselines_established"
+          },
+          "applicable_phases": ["deployment"],
+          "automated": true
+        },
+        {
+          "id": "DEP-009",
+          "category": "deployment",
+          "description": "Disaster recovery plan in place",
+          "priority": "high",
+          "validation_criteria": {
+            "method": "documentation_review",
+            "checklist": ["backup_strategy_defined", "recovery_procedures_documented", "rpo_rto_defined"],
+            "pass_threshold": "dr_plan_complete"
+          },
+          "applicable_phases": ["deployment"],
+          "automated": false
+        },
+        {
+          "id": "DEP-010",
+          "category": "deployment",
+          "description": "Staging environment tested successfully",
+          "priority": "critical",
+          "validation_criteria": {
+            "method": "staging_verification",
+            "checklist": ["staging_deployment_successful", "smoke_tests_pass", "integration_tests_pass"],
+            "pass_threshold": "staging_validated"
+          },
+          "applicable_phases": ["pre_deployment"],
+          "automated": true,
+          "blocking": true
+        },
+        {
+          "id": "DEP-011",
+          "category": "deployment",
+          "description": "Production deployment window scheduled and communicated",
+          "priority": "high",
+          "validation_criteria": {
+            "method": "coordination_check",
+            "checklist": ["stakeholders_notified", "maintenance_window_scheduled", "on_call_team_ready"],
+            "pass_threshold": "deployment_coordinated"
+          },
+          "applicable_phases": ["pre_deployment"],
+          "automated": false
+        },
+        {
+          "id": "DEP-012",
+          "category": "deployment",
+          "description": "Resource scaling configured appropriately",
+          "priority": "medium",
+          "validation_criteria": {
+            "method": "infrastructure_review",
+            "checklist": ["auto_scaling_configured", "resource_limits_set", "cost_optimization_considered"],
+            "pass_threshold": "scaling_configured"
+          },
+          "applicable_phases": ["deployment"],
+          "automated": true
+        }
+      ]
+    }
+  ],
+  "checklist_execution": {
+    "workflow_integration": {
+      "description": "Checklists are integrated into workflow steps",
+      "enforcement": "automated_where_possible",
+      "blocking_items": "prevent_progression_if_failed"
+    },
+    "reporting": {
+      "format": "json",
+      "include_metrics": true,
+      "track_compliance_over_time": true
+    },
+    "customization": {
+      "allow_project_specific_items": true,
+      "allow_priority_adjustment": true,
+      "require_justification_for_skips": true
+    }
+  },
+  "priority_definitions": {
+    "critical": {
+      "description": "Must be completed, blocks progression",
+      "blocking": true,
+      "requires_sign_off": true
+    },
+    "high": {
+      "description": "Should be completed, may block based on context",
+      "blocking": false,
+      "requires_sign_off": true
+    },
+    "medium": {
+      "description": "Important but not blocking",
+      "blocking": false,
+      "requires_sign_off": false
+    },
+    "low": {
+      "description": "Nice to have, can be deferred",
+      "blocking": false,
+      "requires_sign_off": false
+    }
+  },
+  "validation_methods": {
+    "automated_linting": "Static code analysis with linters",
+    "static_analysis": "Automated code quality analysis",
+    "manual_review": "Human code review",
+    "secrets_scanning": "Automated secrets detection",
+    "coverage_analysis": "Code coverage measurement",
+    "test_execution": "Running automated test suites",
+    "security_review": "Manual or automated security assessment",
+    "documentation_review": "Review of documentation completeness"
+  }
+}

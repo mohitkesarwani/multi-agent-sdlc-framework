@@ -1,89 +1,53 @@
-/**
- * Multi-Agent SDLC Framework - Backend Server
- * Main Express application entry point
- */
-
 const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-require('dotenv').config();
-
-// Import configurations
-const environment = require('./config/environment');
-const securityConfig = require('./config/security');
-require('./config/database');
-
-// Import middleware
-const errorHandler = require('./middleware/errorHandler');
+const bodyParser = require('body-parser');
 
 // Import routes
-const apiRoutes = require('./routes/index');
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
+const projectRoutes = require('./routes/projects');
+const iterationRoutes = require('./routes/iterations');
+const taskRoutes = require('./routes/tasks');
+const approvalRoutes = require('./routes/approvals');
+const decisionRoutes = require('./routes/decisions');
+const auditRoutes = require('./routes/audits');
 
-// Initialize Express app
 const app = express();
+const PORT = 5000;
 
-// Security middleware
-app.use(helmet(securityConfig.helmet));
-app.use(cors(securityConfig.cors));
+// Middleware setup
+app.use(cors());
+app.use(bodyParser.json());
 
-// Logging middleware
-if (!environment.isTest()) {
-    app.use(morgan('combined'));
-}
+// MongoDB connection
+mongoose.connect('mongodb://localhost:27017/your-db-name', { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
-// Body parsing middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// API routes
-app.use('/api', apiRoutes);
-
-// Root endpoint
-app.get('/', (req, res) => {
-    res.status(200).json({
-        message: 'Multi-Agent SDLC Framework API',
-        version: '1.0.0',
-        status: 'running',
-        environment: environment.nodeEnv,
-        documentation: '/api'
-    });
+// Authentication middleware setup
+app.use((req, res, next) => {
+    // Your authentication logic here
+    next();
 });
 
-// 404 handler
-app.use((req, res) => {
-    res.status(404).json({
-        error: 'Not Found',
-        message: `Cannot ${req.method} ${req.path}`,
-        availableEndpoints: '/api'
-    });
-});
+// Routes registrations
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/projects', projectRoutes);
+app.use('/api/iterations', iterationRoutes);
+app.use('/api/tasks', taskRoutes);
+app.use('/api/approvals', approvalRoutes);
+app.use('/api/decisions', decisionRoutes);
+app.use('/api/audits', auditRoutes);
 
-// Error handling middleware (must be last)
-app.use(errorHandler);
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).send('Something broke!');
+});
 
 // Start the server
-const PORT = environment.server.port;
-const HOST = environment.server.host;
-
-const server = app.listen(PORT, HOST, () => {
-    console.log(`
-╔═══════════════════════════════════════════════════════════╗
-║   Multi-Agent SDLC Framework - Backend Server Started    ║
-╠═══════════════════════════════════════════════════════════╣
-║   Environment: ${environment.nodeEnv.padEnd(43)} ║
-║   Server:      http://${HOST}:${PORT}${' '.repeat(26)} ║
-║   API:         http://${HOST}:${PORT}/api${' '.repeat(22)} ║
-╚═══════════════════════════════════════════════════════════╝
-    `);
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
 });
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-    console.log('SIGTERM signal received: closing HTTP server');
-    server.close(() => {
-        console.log('HTTP server closed');
-    });
-});
-
-module.exports = app;

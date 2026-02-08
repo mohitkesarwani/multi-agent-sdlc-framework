@@ -1,56 +1,85 @@
 /**
  * Main Routes Index
- * Consolidates all application routes
+ * 
+ * Aggregates and exports all API routes for the application.
+ * This file serves as the central routing configuration.
+ * 
+ * @module routes/index
  */
 
 const express = require('express');
+const authRoutes = require('./auth');
+const projectRoutes = require('./projects');
+
+// Import additional route modules here as they are created
+// const userRoutes = require('./users');
+// const taskRoutes = require('./tasks');
+// const iterationRoutes = require('./iterations');
+// const approvalRoutes = require('./approvals');
+// const decisionRoutes = require('./decisions');
+// const auditRoutes = require('./audits');
+
 const router = express.Router();
 
-// Import route modules
-const authRoutes = require('./auth');
-const userRoutes = require('./users');
-const projectRoutes = require('./projects');
-const iterationRoutes = require('./iterations');
-const taskRoutes = require('./tasks');
-const approvalRoutes = require('./approvals');
-const decisionRoutes = require('./decisions');
-const auditRoutes = require('./audits');
-
-// Health check endpoint
+/**
+ * API Health Check Endpoint
+ * Useful for monitoring and load balancer health checks
+ */
 router.get('/health', (req, res) => {
-    res.status(200).json({ 
-        status: 'ok', 
-        timestamp: new Date().toISOString(),
-        service: 'Multi-Agent SDLC Framework API'
-    });
+  res.status(200).json({
+    success: true,
+    message: 'API is running',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    version: process.env.API_VERSION || 'v1',
+  });
 });
 
-// API version info
+/**
+ * API Root Endpoint
+ * Provides basic API information
+ */
 router.get('/', (req, res) => {
-    res.status(200).json({
-        name: 'Multi-Agent SDLC Framework API',
-        version: '1.0.0',
-        endpoints: {
-            auth: '/api/auth',
-            users: '/api/users',
-            projects: '/api/projects',
-            iterations: '/api/iterations',
-            tasks: '/api/tasks',
-            approvals: '/api/approvals',
-            decisions: '/api/decisions',
-            audits: '/api/audits'
-        }
-    });
+  res.status(200).json({
+    success: true,
+    message: 'Multi-Agent SDLC Framework API',
+    version: process.env.API_VERSION || 'v1',
+    documentation: '/api/docs', // Add when implementing API docs
+    endpoints: {
+      auth: '/api/auth',
+      projects: '/api/projects',
+      // Add more endpoints as they are created
+    },
+  });
 });
 
-// Mount route modules
+/**
+ * Mount Route Modules
+ * All routes are prefixed with their respective paths
+ */
 router.use('/auth', authRoutes);
-router.use('/users', userRoutes);
 router.use('/projects', projectRoutes);
-router.use('/iterations', iterationRoutes);
-router.use('/tasks', taskRoutes);
-router.use('/approvals', approvalRoutes);
-router.use('/decisions', decisionRoutes);
-router.use('/audits', auditRoutes);
+
+// Mount additional routes here
+// router.use('/users', userRoutes);
+// router.use('/tasks', taskRoutes);
+// router.use('/iterations', iterationRoutes);
+// router.use('/approvals', approvalRoutes);
+// router.use('/decisions', decisionRoutes);
+// router.use('/audits', auditRoutes);
+
+/**
+ * 404 Handler for API routes
+ * Catches all undefined API endpoints
+ */
+router.use('*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'API endpoint not found',
+    path: req.originalUrl,
+    method: req.method,
+    timestamp: new Date().toISOString(),
+  });
+});
 
 module.exports = router;
